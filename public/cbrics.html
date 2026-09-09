@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CBRICS Bond Deal Log</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;color:#0F172A;background:#fff}
+.topnav{border-bottom:1px solid #E2E8F0;background:#fff;position:sticky;top:0;z-index:40}
+.topnav-in{max-width:1180px;margin:0 auto;padding:0 1rem;display:flex;align-items:center;gap:22px;height:54px}
+.brand{font-weight:800;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.brand i{color:#1D4ED8;font-size:19px}
+.navlink{font-size:13.5px;font-weight:700;color:#64748B;text-decoration:none;height:54px;
+  display:inline-flex;align-items:center;border-bottom:3px solid transparent}
+.navlink:hover{color:#1D4ED8}
+.disclaimer{max-width:1180px;margin:1.25rem auto 0;padding:0 1rem}
+.disclaimer-in{background:#F8FAFC;border:1px solid #E2E8F0;border-left:3px solid #94A3B8;
+  border-radius:10px;padding:.7rem .95rem;font-size:11.5px;color:#64748B;line-height:1.6}
+.credit{text-align:center;font-size:12.5px;color:#94A3B8;font-weight:500;letter-spacing:.04em;padding:26px 1rem 30px}
+.credit b{font-weight:800}
+.credit .owner{color:#1D4ED8;font-weight:800}
+.credit a{color:inherit;text-decoration:none}
+.credit .owner:hover{color:#1D4ED8}
+</style></head><body>
+<div class="topnav"><div class="topnav-in">
+  <span class="brand"><i class="ti ti-chart-candle"></i>Debt Market</span>
+  <a class="navlink" href="index.html">Overview</a><a class="navlink" href="cdcp.html">CD / CP Secondary</a><a class="navlink" href="cbrics.html" style="color:#1D4ED8;border-bottom-color:#1D4ED8">CBRICS Bond Deals</a><a class="navlink" href="report.html">Closing Report</a>
+</div></div>
+<div class="disclaimer"><div class="disclaimer-in">Source data: CCIL F-TRAC trade reports and CCIL public market pages, retrieved from publicly accessible pages. Reproduced for information only, not for commercial redistribution. Figures are as published by CCIL and may be revised; no warranty is given as to accuracy or completeness. Nothing here is investment advice.</div></div>
+
+<div class="wrap">
+  <div class="heading">
+    <div>
+      <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em;">CBRICS Bond Market Watch</h1>
+      <p class="sub">Corporate bond deals reported on NSE CBRICS. Values are normalized to ₹ Crores. Showing institutional deals ≥ ₹25 Cr by default.</p>
+    </div>
+    <a class="source" href="https://www.nseindia.com/market-data/debt-market-reporting-corporate-bonds-traded-on-exchange" target="_blank" rel="noopener noreferrer"><i class="ti ti-external-link"></i> NSE CBRICS Source</a>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="Search ISIN or Issuer..." aria-label="Search bond deals">
+    <select id="minVal" aria-label="Minimum Trade Value">
+      <option value="25" selected>Deals ≥ ₹25 Cr (Default)</option>
+      <option value="0">All Deals (Any Value)</option>
+      <option value="50">Deals ≥ ₹50 Cr</option>
+      <option value="100">Deals ≥ ₹100 Cr</option>
+    </select>
+    <select id="security" aria-label="Security status">
+      <option value="">All Securities</option>
+      <option value="Listed">Listed Only</option>
+      <option value="Unlisted">Unlisted Only</option>
+    </select>
+    <button id="excel" type="button"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
+    <label class="upload"><i class="ti ti-upload"></i> Replace with NSE CSV<input id="csv" type="file" accept=".csv,text/csv"></label>
+  </div>
+
+  <p id="status" class="status"></p>
+
+  <div class="deal-log-card">
+    <div class="deal-log-banner">BOND DEAL LOG</div>
+    <div class="table-wrap">
+      <table id="dealTable">
+        <thead>
+          <tr>
+            <th style="width:110px">Deal Date</th>
+            <th style="width:130px">ISIN</th>
+            <th style="width:90px">Coupon</th>
+            <th>Issuer Name</th>
+            <th style="width:115px">Maturity Date</th>
+            <th style="width:90px">Yield</th>
+            <th style="width:130px">Trade Value (Cr.)</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footerbar">
+    <span id="count"></span>
+    <div class="pager">
+      <button id="prev" type="button">Previous</button>
+      <span id="page"></span>
+      <button id="next" type="button">Next</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.wrap { max-width: 1280px; margin: 0 auto; padding: 1.25rem 1rem 1.5rem; }
+.heading { display: flex; justify-content: space-between; align-items: start; gap: 18px; }
+.sub { font-size: 13.5px; color: #64748B; margin-top: 4px; font-weight: 500; line-height: 1.5; max-width: 760px; }
+.source, .upload { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 12px; font-weight: 750; border-radius: 9px; padding: 8px 12px; white-space: nowrap; }
+.source { color: #047857; background: #ECFDF5; border: 1px solid #A7F3D0; }
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 1.15rem 0 .65rem; }
+input[type=search], select { height: 38px; border: 1px solid #CBD5E1; border-radius: 9px; padding: 0 11px; font: 600 13px Inter,system-ui,sans-serif; color: #0F172A; background: #fff; }
+input[type=search] { width: min(300px, 100%); }
+.upload { color: #fff; background: #00B050; cursor: pointer; border: 1px solid #00B050; }
+.upload input { display: none; }
+.status { min-height: 18px; color: #64748B; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+
+.deal-log-card { border: 2px solid #00B050; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); margin-bottom: 12px; }
+.deal-log-banner { background: #00B050; color: #000; text-align: center; font-size: 20px; font-weight: 900; letter-spacing: 0.05em; padding: 8px 12px; text-transform: uppercase; border-bottom: 1.5px solid #00873D; }
+.table-wrap { overflow-x: auto; max-height: 72vh; background: #fff; }
+table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 12px; font-family: Inter, Segoe UI, sans-serif; }
+th { position: sticky; top: 0; z-index: 2; background: #00B050; color: #000; border: 1px solid #00873D; padding: 7px 9px; text-align: center; font-size: 12px; font-weight: 800; white-space: nowrap; }
+td { border: 1px solid #94A3B8; padding: 5px 8px; white-space: nowrap; font-variant-numeric: tabular-nums; background: #fff; color: #0F172A; }
+td:nth-child(1), td:nth-child(2), td:nth-child(5) { text-align: center; }
+td:nth-child(3), td:nth-child(6), td:nth-child(7) { text-align: right; }
+td:nth-child(4) { text-align: left; font-weight: 600; min-width: 320px; }
+tbody tr:hover td { background: #EBFEEF; }
+
+.footerbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; color: #64748B; font-size: 12.5px; font-weight: 600; }
+.pager { display: flex; align-items: center; gap: 8px; }
+button { border: 1px solid #CBD5E1; background: #fff; border-radius: 7px; padding: 6px 12px; font: 700 12px Inter,system-ui,sans-serif; color: #334155; cursor: pointer; }
+button:disabled { opacity: .45; cursor: default; }
+@media(max-width:720px){ .heading { display: block; } .source { margin-top: 10px; } .footerbar { align-items: flex-start; flex-direction: column; } }
+</style>
+
+<script>
+const initialRows = [{"deal_date":"09-09-2026","isin":"INE134E08OF6","coupon":7.6,"issuer":"POWER FINANCE CORPORATION LIMITED","maturity_date":"08-09-2031","yield":7.5952,"trade_value_cr":920.0,"price":99.9992,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE556F08LH9","coupon":7.7,"issuer":"SMALL INDUSTRIES DEVELOPMENT BANK OF INDIA","maturity_date":"10-10-2029","yield":7.6173,"trade_value_cr":520.0,"price":100.2217,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE121A07SN8","coupon":7.38,"issuer":"CHOLAMANDALAM INVESTMENT AND FINANCE COMPANY LIMITED","maturity_date":"28-05-2027","yield":7.65,"trade_value_cr":325.0,"price":99.7079,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE556F08KP4","coupon":7.68,"issuer":"SMALL INDUSTRIES DEVELOPMENT BANK OF INDIA","maturity_date":"10-08-2027","yield":7.35,"trade_value_cr":170.0,"price":100.2743,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE916DA7TN7","coupon":7.88,"issuer":"KOTAK MAHINDRA PRIME LIMITED","maturity_date":"19-10-2029","yield":7.9,"trade_value_cr":125.0,"price":99.949,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE481G08131","coupon":7.25,"issuer":"ULTRATECH CEMENT LIMITED","maturity_date":"01-08-2031","yield":7.51,"trade_value_cr":125.0,"price":98.9259,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE556F08LA4","coupon":6.74,"issuer":"SMALL INDUSTRIES DEVELOPMENT BANK OF INDIA","maturity_date":"10-06-2029","yield":7.55,"trade_value_cr":115.0,"price":98.2509,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE377Y07672","coupon":7.53,"issuer":"BAJAJ HOUSING FINANCE LIMITED","maturity_date":"28-09-2029","yield":7.86,"trade_value_cr":100.0,"price":99.124,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE607M08121","coupon":7.55,"issuer":"TATA POWER RENEWABLE ENERGY LIMITED","maturity_date":"25-04-2040","yield":7.6879,"trade_value_cr":76.8,"price":98.7429,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE261F08EU4","coupon":7.44,"issuer":"NATIONAL BANK FOR AGRICULTURE AND RURAL DEVELOPMENT","maturity_date":"17-07-2029","yield":7.594,"trade_value_cr":75.0,"price":99.517,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE118D08078","coupon":7.7,"issuer":"NUVOCO VISTAS CORPORATION LIMITED","maturity_date":"18-09-2028","yield":8.15,"trade_value_cr":65.0,"price":99.18,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE976I07DG4","coupon":7.88,"issuer":"TATA CAPITAL LIMITED","maturity_date":"07-07-2031","yield":8.0503,"trade_value_cr":57.0,"price":99.2754,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE053F08387","coupon":7.46,"issuer":"INDIAN RAILWAY FINANCE CORPORATION LIMITED","maturity_date":"18-06-2029","yield":7.4,"trade_value_cr":50.0,"price":100.1523,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE831R08118","coupon":8.23,"issuer":"ADITYA BIRLA HOUSING FINANCE LIMITED","maturity_date":"18-08-2036","yield":8.2173,"trade_value_cr":50.0,"price":100.02,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE033L07HY2","coupon":8.0,"issuer":"TATA CAPITAL HOUSING FINANCE LIMITED","maturity_date":"03-11-2027","yield":7.54,"trade_value_cr":50.0,"price":100.4515,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE403D08298","coupon":7.4,"issuer":"BHARTI TELECOM LIMITED","maturity_date":"01-02-2029","yield":8.25,"trade_value_cr":50.0,"price":98.1271,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE261F08EM1","coupon":7.53,"issuer":"NATIONAL BANK FOR AGRICULTURE AND RURAL DEVELOPMENT","maturity_date":"24-03-2028","yield":7.345,"trade_value_cr":50.0,"price":100.1674,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE674K08083","coupon":8.0668,"issuer":"ADITYA BIRLA CAPITAL LIMITED","maturity_date":"30-04-2036","yield":8.4,"trade_value_cr":40.0,"price":97.7352,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE556F08KO7","coupon":7.68,"issuer":"SMALL INDUSTRIES DEVELOPMENT BANK OF INDIA","maturity_date":"09-07-2027","yield":7.3462,"trade_value_cr":40.0,"price":100.2509,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE261F08EG3","coupon":7.68,"issuer":"NATIONAL BANK FOR AGRICULTURE AND RURAL DEVELOPMENT","maturity_date":"30-04-2029","yield":7.5976,"trade_value_cr":35.0,"price":100.1141,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE498L08069","coupon":null,"issuer":"L","maturity_date":"\u2013","yield":8.0981,"trade_value_cr":27.0,"price":100.5782,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE033L07HU0","coupon":7.8,"issuer":"TATA CAPITAL HOUSING FINANCE LIMITED","maturity_date":"05-08-2027","yield":7.34,"trade_value_cr":25.0,"price":100.307,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE121A07SH0","coupon":8.4,"issuer":"CHOLAMANDALAM INVESTMENT AND FINANCE COMPANY LIMITED","maturity_date":"18-09-2027","yield":7.89,"trade_value_cr":25.0,"price":100.4914,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE918K08035","coupon":9.6,"issuer":"NUVAMA WEALTH FINANCE LIMITED","maturity_date":"24-12-2032","yield":9.49,"trade_value_cr":25.0,"price":100.5003,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE403D08272","coupon":7.35,"issuer":"BHARTI TELECOM LIMITED","maturity_date":"15-10-2027","yield":7.8,"trade_value_cr":25.0,"price":99.52,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE020B08GD4","coupon":7.38,"issuer":"REC LIMITED","maturity_date":"28-02-2029","yield":7.48,"trade_value_cr":25.0,"price":99.7664,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE556F08KN9","coupon":7.75,"issuer":"SMALL INDUSTRIES DEVELOPMENT BANK OF INDIA","maturity_date":"10-06-2027","yield":7.35,"trade_value_cr":25.0,"price":100.2936,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE261F08ED0","coupon":7.83,"issuer":"NATIONAL BANK FOR AGRICULTURE AND RURAL DEVELOPMENT","maturity_date":"30-12-2026","yield":6.4,"trade_value_cr":25.0,"price":100.3258,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE053F08304","coupon":7.23,"issuer":"INDIAN RAILWAY FINANCE CORPORATION LIMITED","maturity_date":"15-10-2026","yield":5.89,"trade_value_cr":25.0,"price":100.1146,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE377Y07649","coupon":7.83,"issuer":"BAJAJ HOUSING FINANCE LIMITED","maturity_date":"18-05-2029","yield":7.83,"trade_value_cr":25.0,"price":99.9173,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE556F08LF3","coupon":7.4,"issuer":"SMALL INDUSTRIES DEVELOPMENT BANK OF INDIA","maturity_date":"18-06-2031","yield":7.6,"trade_value_cr":25.0,"price":99.1575,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE1C3207016","coupon":9.35,"issuer":"TELANGANA STATE INDUSTRIAL INFRASTRUCTURE CORPORATION LIMITED","maturity_date":"24-11-2034","yield":8.255,"trade_value_cr":25.0,"price":107.75,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE261F08CM5","coupon":6.07,"issuer":"NATIONAL BANK FOR AGRICULTURE AND RURAL DEVELOPMENT","maturity_date":"19-11-2027","yield":7.35,"trade_value_cr":24.7,"price":98.5549,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE296A07UB9","coupon":7.7,"issuer":"BAJAJ FINANCE LIMITED","maturity_date":"20-09-2029","yield":7.9206,"trade_value_cr":20.0,"price":99.2828,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE338I07180","coupon":8.5,"issuer":"MOTILAL OSWAL FINANCIAL SERVICES LIMITED","maturity_date":"06-08-2027","yield":8.1,"trade_value_cr":20.0,"price":100.279,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE674K07069","coupon":7.2959,"issuer":"ADITYA BIRLA CAPITAL LIMITED","maturity_date":"15-09-2028","yield":7.89,"trade_value_cr":20.0,"price":98.9163,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE027A08044","coupon":7.6,"issuer":"RASHTRIYA CHEMICALS AND FERTILIZERS LIMITED","maturity_date":"25-07-2029","yield":7.6626,"trade_value_cr":20.0,"price":99.858,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE148I07VV1","coupon":null,"issuer":"SAMMAAN CAPITAL LIMITED","maturity_date":"\u2013","yield":9.44,"trade_value_cr":20.0,"price":100.3053,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE020B08BP9","coupon":8.97,"issuer":"REC LIMITED","maturity_date":"28-03-2029","yield":8.05,"trade_value_cr":20.0,"price":101.94,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE134E08OE9","coupon":7.61,"issuer":"POWER FINANCE CORPORATION LIMITED","maturity_date":"08-09-2036","yield":7.6356,"trade_value_cr":15.0,"price":100.03,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE860H07GM3","coupon":9.15,"issuer":"ADITYA BIRLA CAPITAL LIMITED","maturity_date":"21-12-2028","yield":8.22,"trade_value_cr":15.0,"price":101.78,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE1VXE07023","coupon":10.35,"issuer":"STL NETWORKS LIMITED","maturity_date":"30-06-2028","yield":12.2024,"trade_value_cr":14.0,"price":97.93,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE146O08282","coupon":9.5,"issuer":"HINDUJA LEYLAND FINANCE LIMITED","maturity_date":"30-10-2030","yield":9.2385,"trade_value_cr":11.3,"price":101.1071,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE0BUS07CT1","coupon":11.0,"issuer":"INDEL MONEY  LIMITED","maturity_date":"24-08-2031","yield":12.5227,"trade_value_cr":10.0,"price":96.7499,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE776C08075","coupon":5.0,"issuer":"GMR AIRPORTS LIMITED","maturity_date":"13-08-2028","yield":9.61,"trade_value_cr":10.0,"price":107.4612,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE121A08PR3","coupon":8.92,"issuer":"CHOLAMANDALAM INVESTMENT AND FINANCE COMPANY LIMITED","maturity_date":"02-12-2034","yield":8.9083,"trade_value_cr":10.0,"price":99.9632,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE121A07SR9","coupon":7.83,"issuer":"CHOLAMANDALAM INVESTMENT AND FINANCE COMPANY LIMITED","maturity_date":"28-06-2028","yield":8.05,"trade_value_cr":10.0,"price":99.5765,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE261F08BF1","coupon":8.24,"issuer":"NATIONAL BANK FOR AGRICULTURE AND RURAL DEVELOPMENT","maturity_date":"22-03-2029","yield":7.6,"trade_value_cr":10.0,"price":101.7554,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE160A08282","coupon":8.59,"issuer":"PUNJAB NATIONAL BANK","maturity_date":"\u2013","yield":7.95,"trade_value_cr":10.0,"price":101.1327,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE723X07125","coupon":8.7,"issuer":"TRUST INVESTMENT ADVISORS PRIVATE LIMITED","maturity_date":"05-10-2026","yield":8.9,"trade_value_cr":10.0,"price":99.9349,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE723X07281","coupon":9.15,"issuer":"TRUST INVESTMENT ADVISORS PRIVATE LIMITED","maturity_date":"10-03-2033","yield":8.8,"trade_value_cr":9.8,"price":101.5568,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B08193","coupon":9.25,"issuer":"IIFL FINANCE LIMITED","maturity_date":"24-06-2032","yield":9.4,"trade_value_cr":8.73,"price":100.9962,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B07534","coupon":9.3,"issuer":"IIFL FINANCE LIMITED","maturity_date":"21-04-2027","yield":9.4196,"trade_value_cr":8.0,"price":99.7343,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE723X07265","coupon":8.85,"issuer":"TRUST INVESTMENT ADVISORS PRIVATE LIMITED","maturity_date":"28-02-2029","yield":8.75,"trade_value_cr":6.0,"price":100.2455,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE0TLC07077","coupon":9.3,"issuer":"THE ANDHRA PRADESH MINERAL DEVELOPMENT CORPORATION LIMITED","maturity_date":"07-05-2030","yield":8.3256,"trade_value_cr":5.5,"price":103.4707,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE0GCN07054","coupon":8.45,"issuer":"ADANI AIRPORT HOLDINGS LIMITED","maturity_date":"12-02-2029","yield":9.1085,"trade_value_cr":5.4,"price":99.0575,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE134E08MF0","coupon":7.82,"issuer":"POWER FINANCE CORPORATION LIMITED","maturity_date":"13-03-2030","yield":7.6,"trade_value_cr":5.0,"price":100.5643,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE020B08CJ0","coupon":7.92,"issuer":"REC LIMITED","maturity_date":"31-03-2030","yield":7.6,"trade_value_cr":5.0,"price":100.8739,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B08227","coupon":9.25,"issuer":"IIFL FINANCE LIMITED","maturity_date":"30-12-2032","yield":9.4,"trade_value_cr":5.0,"price":101.1,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE248U07GA9","coupon":8.75,"issuer":"360 ONE PRIME LIMITED","maturity_date":"10-09-2027","yield":8.75,"trade_value_cr":5.0,"price":100.001,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE124N07820","coupon":9.1,"issuer":"SK FINANCE LIMITED","maturity_date":"10-08-2029","yield":9.648,"trade_value_cr":5.0,"price":98.6045,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE261F08691","coupon":7.2,"issuer":"NATIONAL BANK FOR AGRICULTURE AND RURAL DEVELOPMENT","maturity_date":"21-10-2031","yield":7.73,"trade_value_cr":5.0,"price":98.3576,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B08235","coupon":9.3,"issuer":"IIFL FINANCE LIMITED","maturity_date":"30-12-2035","yield":9.34,"trade_value_cr":4.4,"price":99.6294,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE296G07325","coupon":9.25,"issuer":"MUTHOOT CAPITAL SERVICES LIMITED","maturity_date":"30-06-2028","yield":10.0486,"trade_value_cr":4.3,"price":99.1625,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE735W08053","coupon":11.0,"issuer":"UTKARSH SMALL FINANCE BANK LIMITED","maturity_date":"28-06-2031","yield":11.8602,"trade_value_cr":4.0,"price":99.1,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE523L07AU5","coupon":9.0733,"issuer":"NUVAMA WEALTH AND INVESTMENT LIMITED","maturity_date":"13-11-2028","yield":8.8411,"trade_value_cr":4.0,"price":100.406,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE157D07EJ4","coupon":10.2,"issuer":"CLIX CAPITAL SERVICES PRIVATE LIMITED","maturity_date":"18-03-2027","yield":9.9,"trade_value_cr":2.36,"price":100.1437,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE04VS07370","coupon":9.75,"issuer":"OXYZO FINANCIAL SERVICES LIMITED","maturity_date":"19-03-2027","yield":9.8,"trade_value_cr":1.93,"price":99.7484,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE01HV07551","coupon":9.86,"issuer":"VIVRITI CAPITAL LIMITED","maturity_date":"06-06-2027","yield":9.8,"trade_value_cr":1.8,"price":100.1325,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE07HK07817","coupon":10.4,"issuer":"KRAZYBEE SERVICES LIMITED","maturity_date":"25-06-2027","yield":9.8992,"trade_value_cr":1.5,"price":100.2055,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE0M2307404","coupon":9.15,"issuer":"ANDHRA PRADESH STATE BEVERAGES CORPORATION LIMITED","maturity_date":"30-11-2033","yield":8.4,"trade_value_cr":1.5,"price":105.1807,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE01HV07601","coupon":10.1,"issuer":"VIVRITI CAPITAL LIMITED","maturity_date":"19-08-2027","yield":10.35,"trade_value_cr":1.4,"price":100.1092,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE040A08914","coupon":7.97,"issuer":"HDFC BANK LIMITED","maturity_date":"17-02-2033","yield":7.755,"trade_value_cr":1.4,"price":100.95,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE605Y07213","coupon":9.7,"issuer":"AUXILO FINSERVE PRIVATE LIMITED","maturity_date":"18-11-2028","yield":10.35,"trade_value_cr":1.37,"price":98.6895,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE516Y07444","coupon":6.75,"issuer":"PIRAMAL FINANCE LIMITED 6.75","maturity_date":"26-09-2031","yield":9.1456,"trade_value_cr":1.36,"price":94.9514,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE033L07IP8","coupon":7.17,"issuer":"TATA CAPITAL HOUSING FINANCE LIMITED","maturity_date":"21-05-2030","yield":7.7844,"trade_value_cr":1.1,"price":98.0278,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE018E08342","coupon":8.33,"issuer":"SBI CARDS AND PAYMENT SERVICES LIMITED","maturity_date":"24-06-2034","yield":7.7575,"trade_value_cr":1.0,"price":103.02,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE062A08371","coupon":8.1,"issuer":"STATE BANK OF INDIA","maturity_date":"\u2013","yield":7.73,"trade_value_cr":1.0,"price":101.8378,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B08243","coupon":9.9,"issuer":"IIFL FINANCE LIMITED","maturity_date":"\u2013","yield":9.8766,"trade_value_cr":1.0,"price":100.0,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE01MM08012","coupon":8.35,"issuer":"SBI GENERAL INSURANCE COMPANY LIMITED","maturity_date":"21-02-2034","yield":7.0348,"trade_value_cr":1.0,"price":107.3295,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE729N08121","coupon":8.7,"issuer":"TVS CREDIT SERVICES LIMITED","maturity_date":"25-08-2032","yield":8.7066,"trade_value_cr":1.0,"price":99.92,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B07617","coupon":8.7,"issuer":"IIFL FINANCE LIMITED","maturity_date":"06-03-2028","yield":9.1,"trade_value_cr":0.92,"price":99.3484,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE321N07525","coupon":9.6,"issuer":"INCRED FINANCIAL SERVICES LIMITED","maturity_date":"16-08-2027","yield":9.5,"trade_value_cr":0.74,"price":100.3679,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE859C07295","coupon":9.0,"issuer":"IKF FINANCE LIMITED","maturity_date":"05-10-2028","yield":9.75,"trade_value_cr":0.62,"price":99.316,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE0M2307354","coupon":9.15,"issuer":"ANDHRA PRADESH STATE BEVERAGES CORPORATION LIMITED","maturity_date":"30-11-2029","yield":8.4,"trade_value_cr":0.6,"price":102.4992,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B08185","coupon":9.3,"issuer":"IIFL FINANCE LIMITED","maturity_date":"20-06-2035","yield":9.2813,"trade_value_cr":0.55,"price":100.0,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE2OSN24014","coupon":8.5,"issuer":"TIRUCHIRAPPALLI CITY MUNICIPAL CORPORATION","maturity_date":"06-02-2036","yield":8.484,"trade_value_cr":0.51,"price":100.95,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE157D07EM8","coupon":9.9,"issuer":"CLIX CAPITAL SERVICES PRIVATE LIMITED","maturity_date":"26-05-2027","yield":10.25,"trade_value_cr":0.45,"price":100.0112,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE477L07BC0","coupon":9.0,"issuer":"IIFL HOME FINANCE LIMITED","maturity_date":"26-12-2027","yield":9.3,"trade_value_cr":0.42,"price":99.565,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE101Q07CB5","coupon":9.3,"issuer":"MUTHOOT MCRED LIMITED","maturity_date":"07-08-2029","yield":10.708,"trade_value_cr":0.4,"price":97.4911,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE101Q07CA7","coupon":9.3,"issuer":"MUTHOOT MCRED LIMITED","maturity_date":"20-11-2028","yield":10.8984,"trade_value_cr":0.32,"price":97.8439,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE605Y07163","coupon":9.65,"issuer":"AUXILO FINSERVE PRIVATE LIMITED","maturity_date":"19-07-2027","yield":10.0,"trade_value_cr":0.31,"price":99.9966,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE605Y07205","coupon":9.7,"issuer":"AUXILO FINSERVE PRIVATE LIMITED","maturity_date":"13-06-2028","yield":10.35,"trade_value_cr":0.3,"price":98.8896,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE658F08557","coupon":9.3,"issuer":"KERALA INFRASTRUCTURE INVESTMENT  FUND BOARD","maturity_date":"21-06-2036","yield":8.7802,"trade_value_cr":0.3,"price":104.9178,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE134E08KR9","coupon":7.68,"issuer":"POWER FINANCE CORPORATION LIMITED","maturity_date":"15-07-2030","yield":7.42,"trade_value_cr":0.3,"price":100.8,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE658F08359","coupon":9.42,"issuer":"KERALA INFRASTRUCTURE INVESTMENT  FUND BOARD","maturity_date":"30-12-2029","yield":8.83,"trade_value_cr":0.3,"price":102.2009,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE549K08632","coupon":10.26,"issuer":"MUTHOOT FINCORP LIMITED","maturity_date":"31-12-2031","yield":10.4204,"trade_value_cr":0.28,"price":100.7475,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE918K07QV3","coupon":null,"issuer":"NUVAMA WEALTH FINANCE LIMITED","maturity_date":"04-06-2030","yield":11.6,"trade_value_cr":0.25,"price":101.97,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE04UP07196","coupon":12.75,"issuer":"BEST CAPITAL SERVICES LIMITED","maturity_date":"30-06-2029","yield":15.293,"trade_value_cr":0.25,"price":96.4555,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE658F08300","coupon":9.42,"issuer":"KERALA INFRASTRUCTURE INVESTMENT  FUND BOARD","maturity_date":"30-12-2030","yield":9.3381,"trade_value_cr":0.2,"price":102.8446,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE413U08093","coupon":11.0,"issuer":"IIFL SAMASTA FINANCE LIMITED 11","maturity_date":"18-05-2030","yield":11.2354,"trade_value_cr":0.16,"price":100.0,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE918K07QS9","coupon":9.22,"issuer":"NUVAMA WEALTH FINANCE LIMITED","maturity_date":"20-11-2028","yield":9.2138,"trade_value_cr":0.16,"price":99.8353,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE03K307199","coupon":10.35,"issuer":"SATIN FINSERV LIMITED","maturity_date":"11-08-2028","yield":11.7698,"trade_value_cr":0.15,"price":97.4772,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE157D07EN6","coupon":9.85,"issuer":"CLIX CAPITAL SERVICES PRIVATE LIMITED","maturity_date":"07-07-2027","yield":10.3,"trade_value_cr":0.13,"price":99.9353,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE07HK07841","coupon":10.45,"issuer":"KRAZYBEE SERVICES LIMITED","maturity_date":"16-03-2027","yield":10.7367,"trade_value_cr":0.11,"price":100.0433,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE389Z07120","coupon":9.75,"issuer":"PROFECTUS CAPITAL PRIVATE LIMITED","maturity_date":"30-09-2027","yield":10.95,"trade_value_cr":0.11,"price":99.0936,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE296A07UC7","coupon":7.79,"issuer":"BAJAJ FINANCE LIMITED","maturity_date":"04-07-2036","yield":8.055,"trade_value_cr":0.1,"price":98.3893,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE342T07726","coupon":10.75,"issuer":"NAVI FINSERV LIMITED","maturity_date":"31-08-2029","yield":10.6749,"trade_value_cr":0.1,"price":100.6583,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE01YL07474","coupon":10.5,"issuer":"EARLYSALARY SERVICES PRIVATE LIMITED","maturity_date":"04-10-2028","yield":11.1471,"trade_value_cr":0.1,"price":99.5987,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE545L07051","coupon":11.75,"issuer":"MANGAL CREDIT AND FINCORP LIMITED","maturity_date":"20-02-2028","yield":13.2192,"trade_value_cr":0.1,"price":99.145,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE321N07699","coupon":8.8,"issuer":"INCRED FINANCIAL SERVICES LIMITED","maturity_date":"12-06-2028","yield":9.6417,"trade_value_cr":0.1,"price":99.0658,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE04UP07188","coupon":12.0,"issuer":"BEST CAPITAL SERVICES LIMITED","maturity_date":"30-09-2027","yield":14.0306,"trade_value_cr":0.1,"price":98.5043,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE939X07200","coupon":11.3,"issuer":"MANBA FINANCE LIMITED","maturity_date":"05-06-2027","yield":10.5347,"trade_value_cr":0.1,"price":100.8345,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE932X07056","coupon":10.5,"issuer":"SHARE INDIA SECURITIES LIMITED","maturity_date":"10-08-2028","yield":10.7818,"trade_value_cr":0.1,"price":99.7669,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE896L07AQ3","coupon":9.25,"issuer":"INDOSTAR CAPITAL FINANCE LIMITED","maturity_date":"24-06-2028","yield":9.45,"trade_value_cr":0.07,"price":99.7297,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE658F08516","coupon":9.3,"issuer":"KERALA INFRASTRUCTURE INVESTMENT  FUND BOARD","maturity_date":"21-06-2033","yield":8.75,"trade_value_cr":0.07,"price":103.7989,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE605Y07189","coupon":9.7,"issuer":"AUXILO FINSERVE PRIVATE LIMITED","maturity_date":"29-06-2027","yield":8.895,"trade_value_cr":0.05,"price":100.3184,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE0B2O07011","coupon":10.0,"issuer":"PRISMA GLOBAL LIMITED","maturity_date":"18-08-2028","yield":10.8056,"trade_value_cr":0.05,"price":99.2594,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE549K07IF6","coupon":8.65,"issuer":"MUTHOOT FINCORP LIMITED","maturity_date":"12-05-2029","yield":9.0431,"trade_value_cr":0.05,"price":99.683,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE523L07AM2","coupon":9.2,"issuer":"NUVAMA WEALTH AND INVESTMENT LIMITED","maturity_date":"20-12-2027","yield":9.0,"trade_value_cr":0.04,"price":100.2679,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE530B07476","coupon":9.75,"issuer":"IIFL FINANCE LIMITED","maturity_date":"21-04-2028","yield":9.0987,"trade_value_cr":0.03,"price":100.8135,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE0JZO07040","coupon":13.0,"issuer":"LUCINA LAND DEVELOPMENT LIMITED","maturity_date":"30-06-2029","yield":13.1426,"trade_value_cr":0.02,"price":100.0688,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE583D07638","coupon":9.99,"issuer":"UGRO CAPITAL LIMITED","maturity_date":"16-06-2029","yield":10.5958,"trade_value_cr":0.02,"price":100.2,"security":"Listed","deal_type":"OTC listed"},{"deal_date":"09-09-2026","isin":"INE808K08061","coupon":12.85,"issuer":"AROHAN FINANCIAL SERVICES LIMITED CLASS C","maturity_date":"25-10-2026","yield":12.04,"trade_value_cr":0.02,"price":100.178,"security":"Listed","deal_type":"OTC listed"}];
+let deals = initialRows, filtered = deals, page = 1;
+const perPage = 100;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = (n, d = 4) => {
+  if (n === null || n === undefined || n === '') return '–';
+  const val = Number(n);
+  return Number.isFinite(val) ? val.toFixed(d) : '–';
+};
+const fmtCr = n => {
+  if (n === null || n === undefined || n === '') return '–';
+  const val = Number(n);
+  if (!Number.isFinite(val)) return '–';
+  return Number.isInteger(val) ? val.toString() : val.toFixed(2);
+};
+
+function redraw() {
+  const q = document.querySelector('#search').value.trim().toLowerCase();
+  const minV = Number(document.querySelector('#minVal').value || 0);
+  const security = document.querySelector('#security').value;
+
+  filtered = deals.filter(r => {
+    const val = Number(r.trade_value_cr || 0);
+    const passVal = val >= minV;
+    const passSec = !security || (r.security || '').toLowerCase() === security.toLowerCase();
+    const passSearch = !q || (r.isin || '').toLowerCase().includes(q) || (r.issuer || '').toLowerCase().includes(q);
+    return passVal && passSec && passSearch;
+  });
+
+  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+  page = Math.min(page, pages);
+  const shown = filtered.slice((page - 1) * perPage, page * perPage);
+
+  document.querySelector('#rows').innerHTML = shown.length
+    ? shown.map(r => `<tr>
+        <td>${esc(r.deal_date)}</td>
+        <td>${esc(r.isin)}</td>
+        <td>${num(r.coupon, 4)}</td>
+        <td>${esc(r.issuer)}</td>
+        <td>${esc(r.maturity_date)}</td>
+        <td>${num(r.yield, 4)}</td>
+        <td>${fmtCr(r.trade_value_cr)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:26px;color:#64748B;font-weight:600">No deals match the selected filters.</td></tr>';
+
+  document.querySelector('#count').textContent = `${filtered.length.toLocaleString('en-IN')} deals displayed (out of ${deals.length.toLocaleString('en-IN')} total)`;
+  document.querySelector('#page').textContent = `Page ${page} of ${pages}`;
+  document.querySelector('#prev').disabled = page === 1;
+  document.querySelector('#next').disabled = page === pages;
+}
+
+function parseCsv(text) {
+  const out = []; let row = [], cell = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (quoted && text[i + 1] === '"') { cell += '"'; i++; }
+    } else if (ch === ',' && !quoted) {
+      row.push(cell); cell = '';
+    } else if ((ch === '\n' || ch === '\r') && !quoted) {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell);
+      if (row.some(v => v.trim())) out.push(row);
+      row = []; cell = '';
+    } else {
+      cell += ch;
+    }
+  }
+  if (cell || row.length) { row.push(cell); out.push(row); }
+  return out;
+}
+
+const MONTHS = { "JA":"01","JAN":"01","FB":"02","FEB":"02","MR":"03","MAR":"03","AP":"04","APR":"04","MY":"05","MAY":"05","JN":"06","JUN":"06","JU":"06","JUL":"07","JL":"07","AG":"08","AUG":"08","AU":"08","SP":"09","SEP":"09","SE":"09","OT":"10","OCT":"10","OC":"10","NV":"11","NOV":"11","NO":"11","DC":"12","DEC":"12","DE":"12" };
+
+function parseDesc(desc) {
+  if (!desc) return { issuer: '', coupon: null, matDate: '–' };
+  const s = String(desc).trim();
+  let matDate = '–';
+  const mMatch = s.match(/\b(\d{1,2})([A-Za-z]{2,3})(\d{2,4})\b/);
+  if (mMatch) {
+    const d = mMatch[1].padStart(2, '0');
+    const mon = mMatch[2].toUpperCase();
+    let yr = mMatch[3];
+    if (yr.length === 2) yr = Number(yr) < 80 ? '20' + yr : '19' + yr;
+    const m = MONTHS[mon] || MONTHS[mon.slice(0, 2)];
+    if (m) matDate = `${d}-${m}-${yr}`;
+  }
+  let coupon = null;
+  const cMatch = s.match(/\b(\d{1,2}(?:\.\d{1,4})?)\s*(?:BD|NCD|BOND|LOA|%)\b/i) || s.match(/\b(\d{1,2}\.\d{2,4})\b/);
+  if (cMatch) coupon = Number(cMatch[1]);
+  let issuer = s.replace(/\s+(?:SR|SERIES|TR|TRANCHE|OPTION|OPT|LOA|\d{1,2}(?:\.\d{1,4})?\s*(?:BD|NCD|BOND|%|STRPP|ETF))\b.*/i, '').trim();
+  issuer = issuer.replace(/FVRS.*/i, '').replace(/\b\d{1,2}[A-Za-z]{2,3}\d{2,4}\b.*/i, '').trim();
+  return { issuer: issuer || s, coupon, matDate };
+}
+
+function parseDateStr(v) {
+  if (!v) return '–';
+  const m = String(v).trim().match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
+  if (m) return `${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}-${m[3].length === 2 ? '20' + m[3] : m[3]}`;
+  return String(v).trim() || '–';
+}
+
+function replaceCsv(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const lines = parseCsv(reader.result);
+    if (!lines.length) return;
+    const heads = lines.shift().map(h => h.trim().replace(/^\ufeff/, ''));
+    const at = names => heads.findIndex(h => names.some(n => h.toLowerCase() === n.toLowerCase()));
+
+    const isinIdx = at(['ISIN']);
+    if (isinIdx < 0) {
+      document.querySelector('#status').textContent = 'Error: The uploaded CSV does not contain an ISIN column.';
+      return;
+    }
+
+    const descIdx = at(['DESCRIPTOR', 'Issuer Name', 'Security Description']);
+    const dateIdx = at(['Trade Date & Time', 'Deal Date', 'Trade Date', 'DEAL DATE']);
+    const matIdx = at(['Put/Call Date', 'Maturity Date', 'MATURITY DATE', 'Expiry Date']);
+    const cpnIdx = at(['Coupon', 'Coupon (%)', 'COUPON']);
+    const yldIdx = at(['WEIGHTED AVERAGE YIELD (YTM) (%)', 'Yield', 'WEIGHTED AVERAGE YIELD', 'YTM', 'Yield (%)']);
+    const valCrIdx = at(['VALUE (₹ Crores)', 'Trade Value in Rs. Crores', 'VALUE (Rs. Crores)', 'Trade Value (Cr.)', 'Trade Value (Cr)']);
+    const valLacsIdx = at(['Trade Value in Rs. Lacs', 'Trade Value (Lacs)', 'VALUE (₹ Lacs)', 'VALUE (Rs. Lakhs)']);
+    const secIdx = at(['Listed / Unlisted Security', 'Security']);
+
+    deals = lines.map(x => {
+      const isin = (x[isinIdx] || '').trim();
+      if (!isin) return null;
+      const desc = descIdx >= 0 ? x[descIdx] || '' : '';
+      const p = parseDesc(desc);
+
+      let valCr = valCrIdx >= 0 && x[valCrIdx] ? Number(String(x[valCrIdx]).replace(/,/g, '').trim()) : null;
+      if (valCr === null && valLacsIdx >= 0 && x[valLacsIdx]) {
+        const l = Number(String(x[valLacsIdx]).replace(/,/g, '').trim());
+        if (Number.isFinite(l)) valCr = Math.round((l / 100.0) * 100) / 100;
+      }
+
+      let cpn = cpnIdx >= 0 && x[cpnIdx] ? Number(String(x[cpnIdx]).replace(/,/g, '').trim()) : p.coupon;
+      let mat = matIdx >= 0 && x[matIdx] ? parseDateStr(x[matIdx]) : p.matDate;
+      let yld = yldIdx >= 0 && x[yldIdx] ? Number(String(x[yldIdx]).replace(/,/g, '').trim()) : null;
+      let dDate = dateIdx >= 0 && x[dateIdx] ? parseDateStr(x[dateIdx]) : new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+      let iss = heads[descIdx] === 'Issuer Name' ? (x[descIdx] || p.issuer) : p.issuer;
+
+      return {
+        deal_date: dDate,
+        isin: isin,
+        coupon: cpn,
+        issuer: iss,
+        maturity_date: mat,
+        yield: yld,
+        trade_value_cr: valCr,
+        security: secIdx >= 0 ? (x[secIdx] || 'Listed').trim() : 'Listed'
+      };
+    }).filter(Boolean);
+
+    page = 1;
+    document.querySelector('#status').textContent = `Loaded ${deals.length.toLocaleString('en-IN')} deals from ${file.name}.`;
+    redraw();
+  };
+  reader.readAsText(file);
+}
+
+function exportExcel() {
+  const header = ['Deal Date', 'ISIN', 'Coupon', 'Issuer Name', 'Maturity Date', 'Yield', 'Trade Value (Cr.)'];
+  const rows = filtered.map(r => [
+    r.deal_date,
+    r.isin,
+    r.coupon !== null ? Number(r.coupon).toFixed(4) : '',
+    r.issuer,
+    r.maturity_date,
+    r.yield !== null ? Number(r.yield).toFixed(4) : '',
+    r.trade_value_cr !== null ? r.trade_value_cr : ''
+  ]);
+
+  let html = '<html><head><meta charset="utf-8"></head><body><table border="1">';
+  html += '<tr><th colspan="7" style="background-color:#00B050;color:#000000;font-size:16pt;font-weight:bold;text-align:center;height:35px;">BOND DEAL LOG</th></tr>';
+  html += '<tr>' + header.map(x => '<th style="background-color:#00B050;color:#000000;font-weight:bold;text-align:center;">' + esc(x) + '</th>').join('') + '</tr>';
+  html += rows.map(r => '<tr>' + r.map((x, i) => '<td style="' + (i===0||i===1||i===4 ? 'text-align:center;' : (i===2||i===5||i===6 ? 'text-align:right;' : 'text-align:left;')) + '">' + esc(x) + '</td>').join('') + '</tr>').join('');
+  html += '</table></body></html>';
+
+  const url = URL.createObjectURL(new Blob([html], { type: 'application/vnd.ms-excel' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'BOND_DEAL_LOG.xls';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.querySelector('#search').addEventListener('input', () => { page = 1; redraw(); });
+document.querySelector('#minVal').addEventListener('change', () => { page = 1; redraw(); });
+document.querySelector('#security').addEventListener('change', () => { page = 1; redraw(); });
+document.querySelector('#prev').addEventListener('click', () => { page--; redraw(); });
+document.querySelector('#next').addEventListener('click', () => { page++; redraw(); });
+document.querySelector('#excel').addEventListener('click', exportExcel);
+document.querySelector('#csv').addEventListener('change', e => e.target.files[0] && replaceCsv(e.target.files[0]));
+
+document.querySelector('#status').textContent = `Loaded ${deals.length.toLocaleString('en-IN')} deals from latest automated market watch.`;
+redraw();
+</script>
+<div class="credit">Made By <a href="https://www.linkedin.com/company/finqrate" target="_blank" rel="noopener noreferrer"><b>Finqrate</b></a> for <a class="owner" href="https://www.linkedin.com/in/swayamjitdalai/" target="_blank" rel="noopener noreferrer">Swayamjit Dalai</a></div>
+</body></html>

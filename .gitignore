@@ -1,0 +1,26 @@
+# Raw downloads, WAL/SHM locks, and temporary logs stay off GitHub
+data/market.db-wal
+data/market.db-shm
+data/raw/
+data/*.log
+data/removed_test_report_*.json
+
+# The Vercel deploy hook is a secret - anyone holding the URL can trigger
+# deployments, and this repository is public.
+data/deploy_hook.txt
+data/task_backup.xml
+
+# Legacy store, already migrated into data/market.db
+reports.db
+
+# Original manual downloads, no longer read by anything
+*.xls
+chart_snapshot.html
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vercel/
+.vercel
+.env*
