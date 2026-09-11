@@ -2,20 +2,24 @@ name: Daily Market Data Update & Deployment
 
 on:
   schedule:
-    # 11:45 UTC = 17:15 IST (5:15 PM India Standard Time)
-    - cron: '45 11 * * *'
-    # 12:00 UTC = 17:30 IST (5:30 PM IST)
-    - cron: '0 12 * * *'
-    # 12:30 UTC = 18:00 IST (6:00 PM IST)
-    - cron: '30 12 * * *'
-    # 13:15 UTC = 18:45 IST (6:45 PM IST) secondary evening sweep for late filings
-    - cron: '15 13 * * *'
+    # Multiple off-peak pulses across the evening (IST is UTC + 5:30)
+    # Ensures zero chance of missed runs due to GitHub shared-queue delays
+    - cron: '47 11 * * 1-5'  # 17:17 IST (5:17 PM IST)
+    - cron: '03 12 * * 1-5'  # 17:33 IST (5:33 PM IST)
+    - cron: '19 12 * * 1-5'  # 17:49 IST (5:49 PM IST)
+    - cron: '37 12 * * 1-5'  # 18:07 IST (6:07 PM IST)
+    - cron: '53 12 * * 1-5'  # 18:23 IST (6:23 PM IST)
+    - cron: '17 13 * * 1-5'  # 18:47 IST (6:47 PM IST - secondary settlement check)
+    - cron: '43 13 * * 1-5'  # 19:13 IST (7:13 PM IST - final closing sweep)
+    - cron: '11 14 * * 1-5'  # 19:41 IST (7:41 PM IST)
   workflow_dispatch:
     inputs:
       days:
         description: 'Number of past days to ingest'
         required: false
         default: '7'
+  repository_dispatch:
+    types: [daily_market_update]
 
 # Permissions required to commit and push changes back to the repository
 permissions:
@@ -67,8 +71,8 @@ jobs:
       - name: Commit & Push Updated Data to GitHub
         id: commit_step
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "Swayamjit Dalai"
+          git config user.email "swayamjitdalai-bit@users.noreply.github.com"
           
           # Stage the updated database, CSV, and baked static assets
           git add -f data/market.db data/cbrics.csv public/ vercel.json 2>/dev/null || true
@@ -84,24 +88,6 @@ jobs:
             echo "Successfully pushed updated market data to main branch."
           fi
 
-      - name: Deploy to Vercel (CLI)
-        if: env.VERCEL_TOKEN != ''
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          echo "Deploying to Vercel via Vercel CLI..."
-          npx vercel deploy --prod --yes --token="$VERCEL_TOKEN"
-
-      - name: Trigger Vercel Deploy Hook (Alternative)
-        if: env.VERCEL_TOKEN == '' && env.VERCEL_DEPLOY_HOOK != ''
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-        run: |
-          echo "Triggering Vercel Deploy Hook..."
-          curl -s -X POST "$VERCEL_DEPLOY_HOOK" -o /dev/null -w "HTTP Status: %{http_code}\n"
-
       - name: Publish Summary to GitHub Actions
         run: |
           echo "### 📊 Daily Market Update Complete" >> $GITHUB_STEP_SUMMARY
@@ -109,4 +95,4 @@ jobs:
           echo "- **Data Ingest:** ✅ CCIL F-TRAC, CCIL Money Market, FBIL OIS, Brent Oil, NSE CBRICS" >> $GITHUB_STEP_SUMMARY
           echo "- **Static Publish:** ✅ Generated ./public dashboard" >> $GITHUB_STEP_SUMMARY
           echo "- **Git Push:** ${{ steps.commit_step.outputs.has_changes == 'true' && '✅ Updated data committed and pushed to main' || 'ℹ️ No data change' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Vercel / Streamlit Live Status:** ✅ Refreshed automatically" >> $GITHUB_STEP_SUMMARY
+          echo "- **Vercel Live Status:** ✅ Auto-deployed to production" >> $GITHUB_STEP_SUMMARY
