@@ -84,6 +84,7 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
             NOW_UTC=$(date -u '+%Y-%m-%d %H:%M UTC')
             git commit -m "Auto market data update: $NOW_UTC"
+            git pull --rebase -X theirs origin main || true
             git push origin main
             echo "Successfully pushed updated market data to main branch."
           fi
