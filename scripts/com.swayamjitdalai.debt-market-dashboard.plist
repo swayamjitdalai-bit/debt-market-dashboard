@@ -19,9 +19,7 @@
 	<key>WorkingDirectory</key>
 	<string>/Users/swayamjitdalai/Documents/debt-market-dashboard-main</string>
 	<key>RunAtLoad</key>
-	<true/>
-	<key>StartInterval</key>
-	<integer>900</integer>
+	<false/>
 	<key>StartCalendarInterval</key>
 	<array>
 		<dict>
