@@ -1,8 +1,6 @@
 #!/bin/zsh
-# Smart background market data ingestion.
-# Runs on macOS via LaunchAgent.
-# Simply ingest → publish → commit → push.
-# Vercel auto-deploys on every push to main.
+# Debt Market Dashboard — automated background data updater
+# Runs via macOS LaunchAgent.
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
@@ -28,35 +26,32 @@ fi
 echo "$$" > "$LOCK_FILE"
 trap 'rm -f "$LOCK_FILE"' EXIT INT TERM
 
-FORCE=false
-if [[ "${1:-}" == "--force" ]]; then
-  FORCE=true
-fi
-
-# Time guard: only run 5:15 PM – 11:59 PM IST
+# Time guard: only run between 5:00 PM (17:00) and 11:59 PM (23:59) IST unless --force is given
 CURRENT_HOUR=$(date '+%H')
 CURRENT_MIN=$(date '+%M')
-TIME_VAL=$(( 10#$CURRENT_HOUR * 60 + 10#$CURRENT_MIN ))
+TIME_VAL=$(( CURRENT_HOUR * 60 + CURRENT_MIN ))
 
-if [[ "$FORCE" != "true" ]] && [[ $TIME_VAL -lt $(( 17*60+15 )) || $TIME_VAL -gt $(( 23*60+59 )) ]]; then
+if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 1020 || $TIME_VAL -gt 1439 ]]; then
+  # Sleep 10 seconds before exit so launchd minimum runtime threshold (>10s) passes cleanly with exit code 0
+  sleep 10
   exit 0
 fi
 
 log "daily refresh started"
 
-# Sync with remote: stash any local tweaks, pull, then restore
+# Sync local repo with remote main branch safely
 git stash --quiet 2>>"$LOG" || true
 git fetch origin main --quiet 2>>"$LOG" || true
 git reset --hard origin/main --quiet 2>>"$LOG" || true
 git stash pop --quiet 2>>"$LOG" || true
 
-# Ingest
+# Ingest market data from FBIL, CCIL, F-TRAC, CBRICS, Brent
 "$PYTHON" -u -m app.ingest --days 7 >> "$LOG" 2>&1 || log "WARNING: ingest had errors"
 
-# Publish static site
-"$PYTHON" -u -m app.publish >> "$LOG" 2>&1 || { log "ERROR: publish failed"; exit 0; }
+# Bake static site into ./public
+"$PYTHON" -u -m app.publish >> "$LOG" 2>&1 || { log "ERROR: publish failed"; sleep 10; exit 0; }
 
-# Commit & push
+# Commit updated data and push to GitHub (triggers Vercel auto-deploy)
 git config user.name  "Swayamjit Dalai"
 git config user.email "swayamjitdalai-bit@users.noreply.github.com"
 git add -f data/market.db data/cbrics.csv public/ vercel.json 2>/dev/null || true
@@ -69,9 +64,10 @@ else
   if git push origin main >> "$LOG" 2>&1; then
     log "pushed to GitHub — Vercel deployment triggered automatically"
   else
-    log "WARNING: push failed, will retry on next run"
+    log "WARNING: push failed, will retry next run"
   fi
 fi
 
 log "daily refresh completed"
+sleep 10
 exit 0
