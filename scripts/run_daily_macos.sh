@@ -26,12 +26,14 @@ fi
 echo "$$" > "$LOCK_FILE"
 trap 'rm -f "$LOCK_FILE"' EXIT INT TERM
 
-# Time guard: only run between 5:00 PM (17:00) and 11:59 PM (23:59) IST unless --force is given
+# Time guard: only run between 1:00 PM (13:00) and 5:40 PM (17:40) IST unless --force is given
 CURRENT_HOUR=$(date '+%H')
 CURRENT_MIN=$(date '+%M')
-TIME_VAL=$(( CURRENT_HOUR * 60 + CURRENT_MIN ))
+# Force base-10 arithmetic to avoid octal issues
+TIME_VAL=$(( 10#$CURRENT_HOUR * 60 + 10#$CURRENT_MIN ))
 
-if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 1020 || $TIME_VAL -gt 1439 ]]; then
+# 13:00 IST = 780 minutes; 17:40 IST = 1060 minutes
+if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 780 || $TIME_VAL -gt 1060 ]]; then
   # Sleep 10 seconds before exit so launchd minimum runtime threshold (>10s) passes cleanly with exit code 0
   sleep 10
   exit 0
