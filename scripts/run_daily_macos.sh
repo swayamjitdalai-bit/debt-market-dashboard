@@ -4,7 +4,11 @@
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-PROJECT_DIR="/Users/swayamjitdalai/Documents/debt-market-dashboard-main"
+# Resolve this from the script location.  A hard-coded home-directory path
+# caused launchd to run a different checkout (or nothing at all) after this
+# project was moved into Documents.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PYTHON="$PROJECT_DIR/.venv/bin/python"
 LOG="$PROJECT_DIR/data/ingest.log"
 LOCK_FILE="/tmp/debt_market_macos_ingest.lock"
@@ -26,26 +30,19 @@ fi
 echo "$$" > "$LOCK_FILE"
 trap 'rm -f "$LOCK_FILE"' EXIT INT TERM
 
-# Time guard: only run between 1:00 PM (13:00) and 5:40 PM (17:40) IST unless --force is given
+# Time guard: refresh from 2:00 PM through 5:20 PM local time unless forced.
 CURRENT_HOUR=$(date '+%H')
 CURRENT_MIN=$(date '+%M')
-# Force base-10 arithmetic to avoid octal issues
 TIME_VAL=$(( 10#$CURRENT_HOUR * 60 + 10#$CURRENT_MIN ))
 
-# 13:00 IST = 780 minutes; 17:40 IST = 1060 minutes
-if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 780 || $TIME_VAL -gt 1060 ]]; then
+# 14:00 = 840 minutes; 17:20 = 1040 minutes.
+if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 840 || $TIME_VAL -gt 1040 ]]; then
   # Sleep 10 seconds before exit so launchd minimum runtime threshold (>10s) passes cleanly with exit code 0
   sleep 10
   exit 0
 fi
 
 log "daily refresh started"
-
-# Sync local repo with remote main branch safely
-git stash --quiet 2>>"$LOG" || true
-git fetch origin main --quiet 2>>"$LOG" || true
-git reset --hard origin/main --quiet 2>>"$LOG" || true
-git stash pop --quiet 2>>"$LOG" || true
 
 # Ingest market data from FBIL, CCIL, F-TRAC, CBRICS, Brent
 "$PYTHON" -u -m app.ingest --days 7 >> "$LOG" 2>&1 || log "WARNING: ingest had errors"

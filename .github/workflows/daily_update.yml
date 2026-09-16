@@ -2,18 +2,13 @@ name: Daily Market Data Update & Deployment
 
 on:
   schedule:
-    # Frequent pulses from 1:00 PM IST to 5:40 PM IST (IST is UTC + 5:30)
-    - cron: '30 07 * * 1-5'  # 13:00 IST (1:00 PM IST)
-    - cron: '00 08 * * 1-5'  # 13:30 IST (1:30 PM IST)
-    - cron: '30 08 * * 1-5'  # 14:00 IST (2:00 PM IST)
-    - cron: '00 09 * * 1-5'  # 14:30 IST (2:30 PM IST)
-    - cron: '30 09 * * 1-5'  # 15:00 IST (3:00 PM IST)
-    - cron: '00 10 * * 1-5'  # 15:30 IST (3:30 PM IST)
-    - cron: '30 10 * * 1-5'  # 16:00 IST (4:00 PM IST)
-    - cron: '00 11 * * 1-5'  # 16:30 IST (4:30 PM IST)
-    - cron: '30 11 * * 1-5'  # 17:00 IST (5:00 PM IST)
-    - cron: '50 11 * * 1-5'  # 17:20 IST (5:20 PM IST)
-    - cron: '10 12 * * 1-5'  # 17:40 IST (5:40 PM IST)
+    # Every 15 minutes from 2:00 PM to 5:15 PM IST, plus 5:20 PM IST.
+    # (IST is UTC+5:30; GitHub may start scheduled jobs a few minutes late.)
+    - cron: '30,45 08 * * 1-5'  # 14:00, 14:15 IST
+    - cron: '00,15,30,45 09 * * 1-5'  # 14:30–15:15 IST
+    - cron: '00,15,30,45 10 * * 1-5'  # 15:30–16:15 IST
+    - cron: '00,15,30,45 11 * * 1-5'  # 16:30–17:15 IST
+    - cron: '50 11 * * 1-5'  # 17:20 IST
   workflow_dispatch:
     inputs:
       days:
@@ -29,7 +24,9 @@ permissions:
 
 concurrency:
   group: daily-market-ingest
-  cancel-in-progress: true
+  # Let a slow source fetch complete; cancelling it at the next interval left
+  # the dashboard with an incomplete update.
+  cancel-in-progress: false
 
 jobs:
   update-and-deploy:
