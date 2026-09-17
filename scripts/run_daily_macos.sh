@@ -20,10 +20,16 @@ log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S %Z')] $*" >> "$LOG"
 }
 
+# Calendar-triggered jobs used to exit silently, making it impossible to tell
+# the difference between a missed launch and a refresh skipped by the guard.
+# Keep a small audit line for every invocation.
+log "scheduler invoked (pid $$)"
+
 # Prevent overlapping runs
 if [[ -f "$LOCK_FILE" ]]; then
   LOCK_PID=$(cat "$LOCK_FILE" 2>/dev/null || echo "")
   if [[ -n "$LOCK_PID" ]] && kill -0 "$LOCK_PID" 2>/dev/null; then
+    log "refresh already running (pid $LOCK_PID); skipping overlapping trigger"
     exit 0
   fi
 fi
@@ -37,6 +43,7 @@ TIME_VAL=$(( 10#$CURRENT_HOUR * 60 + 10#$CURRENT_MIN ))
 
 # 14:00 = 840 minutes; 17:20 = 1040 minutes.
 if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 840 || $TIME_VAL -gt 1040 ]]; then
+  log "outside refresh window; exiting"
   # Sleep 10 seconds before exit so launchd minimum runtime threshold (>10s) passes cleanly with exit code 0
   sleep 10
   exit 0

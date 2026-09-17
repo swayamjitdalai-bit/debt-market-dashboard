@@ -11,15 +11,18 @@
 		<key>PATH</key>
 		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
 	</dict>
+	<!-- Set Program explicitly.  Leaving it inferred made launchd reject each
+	     calendar trigger with EX_CONFIG before the updater was started. -->
+	<key>Program</key>
+	<string>/bin/zsh</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/bin/zsh</string>
-		<string>/Users/swayamjitdalai/Documents/debt-market-dashboard-main/scripts/run_daily_macos.sh</string>
+		<string>-c</string>
+		<string>exec "/Users/swayamjitdalai/Documents/debt-market-dashboard-main/scripts/run_daily_macos.sh"</string>
 	</array>
 	<key>WorkingDirectory</key>
 	<string>/Users/swayamjitdalai/Documents/debt-market-dashboard-main</string>
-	<key>RunAtLoad</key>
-	<true/>
 	<key>StartCalendarInterval</key>
 	<array>
 		<!-- 2 PM IST (14:00, 14:15, 14:30, 14:45) -->
