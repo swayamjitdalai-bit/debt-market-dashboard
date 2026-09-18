@@ -1,0 +1,65 @@
+"""Run in the dedicated background checkout; never reset a user's worktree."""
+import argparse
+import datetime as dt
+import fcntl
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from .config import BASE_DIR
+
+
+def run(*args, cwd=BASE_DIR):
+    subprocess.run(args, cwd=cwd, check=True)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args()
+    now = dt.datetime.now(ZoneInfo("Asia/Kolkata"))
+    print(f"Scheduler invoked: {now.isoformat()}", flush=True)
+    if not args.force and (now.weekday() >= 5 or not (840 <= now.hour * 60 + now.minute <= 1040)):
+        print("Outside weekday 14:00–17:20 IST window", flush=True)
+        return 0
+    with open(Path(BASE_DIR) / "data" / "refresh.lock", "a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("Another refresh is still running", flush=True)
+            return 0
+        if subprocess.check_output(["git", "status", "--porcelain"], cwd=BASE_DIR).strip():
+            raise RuntimeError("Background checkout has uncommitted changes; preserve them and inspect the log")
+        run("git", "pull", "--ff-only", "origin", "main")
+        # Each run gets a fresh checkout so a failed fetch/push cannot poison
+        # tomorrow's run. Failed checkouts remain available for diagnosis.
+        runs = Path(BASE_DIR) / "data" / "runs"
+        runs.mkdir(exist_ok=True)
+        checkout = tempfile.mkdtemp(prefix="refresh-", dir=runs)
+        remote = subprocess.check_output(["git", "remote", "get-url", "origin"], cwd=BASE_DIR, text=True).strip()
+        run("git", "clone", "--quiet", BASE_DIR, checkout)
+        run("git", "remote", "set-url", "origin", remote, cwd=checkout)
+        for key in ("user.name", "user.email"):
+            value = subprocess.check_output(["git", "config", key], cwd=BASE_DIR, text=True).strip()
+            run("git", "config", key, value, cwd=checkout)
+        run(sys.executable, "-u", "-m", "app.ingest", "--days", "7", cwd=checkout)
+        run(sys.executable, "-u", "-m", "app.publish", cwd=checkout)
+        run("git", "add", "data/market.db", "data/cbrics.csv", "public", "vercel.json", cwd=checkout)
+        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=checkout).returncode:
+            run("git", "commit", "-m", f"Market refresh {now:%Y-%m-%d %H:%M} IST", cwd=checkout)
+        # Fail visibly on a competing remote update; never discard either database.
+        run("git", "push", "origin", "HEAD:main", cwd=checkout)
+        run(sys.executable, "-u", "-m", "app.verify_deploy", cwd=checkout)
+        shutil.rmtree(checkout)
+        return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except (subprocess.CalledProcessError, RuntimeError) as exc:
+        print(f"REFRESH FAILED: {exc}", file=sys.stderr, flush=True)
+        raise SystemExit(1)

@@ -3,6 +3,8 @@ data/market.db-wal
 data/market.db-shm
 data/raw/
 data/*.log
+data/refresh.lock
+data/runs/
 data/removed_test_report_*.json
 
 # The Vercel deploy hook is a secret - anyone holding the URL can trigger

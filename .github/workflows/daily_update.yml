@@ -57,8 +57,11 @@ jobs:
           pip install -r requirements.txt
 
       - name: Ingest Market Data
+        env:
+          DAYS: ${{ github.event.inputs.days || '7' }}
+          TZ: Asia/Kolkata
         run: |
-          DAYS="${{ github.event.inputs.days || '7' }}"
+          git pull --ff-only origin main
           echo "Running market ingestion for the last $DAYS days..."
           python -m app.ingest --days "$DAYS"
 
@@ -74,7 +77,7 @@ jobs:
           git config user.email "swayamjitdalai-bit@users.noreply.github.com"
           
           # Stage the updated database, CSV, and baked static assets
-          git add -f data/market.db data/cbrics.csv public/ vercel.json 2>/dev/null || true
+          git add data/market.db data/cbrics.csv public/ vercel.json
           
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
@@ -83,10 +86,12 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
             NOW_UTC=$(date -u '+%Y-%m-%d %H:%M UTC')
             git commit -m "Auto market data update: $NOW_UTC"
-            git pull --rebase -X theirs origin main || true
             git push origin main
             echo "Successfully pushed updated market data to main branch."
           fi
+
+      - name: Verify live Vercel deployment
+        run: python -u -m app.verify_deploy
 
       - name: Publish Summary to GitHub Actions
         run: |
@@ -95,4 +100,4 @@ jobs:
           echo "- **Data Ingest:** ✅ CCIL F-TRAC, CCIL Money Market, FBIL OIS, Brent Oil, NSE CBRICS" >> $GITHUB_STEP_SUMMARY
           echo "- **Static Publish:** ✅ Generated ./public dashboard" >> $GITHUB_STEP_SUMMARY
           echo "- **Git Push:** ${{ steps.commit_step.outputs.has_changes == 'true' && '✅ Updated data committed and pushed to main' || 'ℹ️ No data change' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Vercel Live Status:** ✅ Auto-deployed to production" >> $GITHUB_STEP_SUMMARY
+          echo "- **Vercel Live Status:** Production files verified against this refresh" >> $GITHUB_STEP_SUMMARY
