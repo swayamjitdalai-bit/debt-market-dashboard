@@ -26,7 +26,6 @@ PUBLIC_DIR = os.path.join(BASE_DIR, "public")
 DASHBOARD_SRC = os.path.join(BASE_DIR, "cd_cp_secondary_processorhtml.html")
 CBRICS_CSV = os.path.join(DATA_DIR := os.path.join(BASE_DIR, "data"), "cbrics.csv")
 
-FINQRATE_URL = "https://www.linkedin.com/company/finqrate"
 SWAYAMJIT_URL = "https://www.linkedin.com/in/swayamjitdalai/"
 
 # Shown on every published page. The data is CCIL's; saying so plainly is both
@@ -40,8 +39,7 @@ ATTRIBUTION = (
 )
 
 CREDIT_HTML = (
-    f'Made By <a href="{FINQRATE_URL}" target="_blank" rel="noopener noreferrer">'
-    f'<b>Finqrate</b></a> for '
+    'Developed by '
     f'<a class="owner" href="{SWAYAMJIT_URL}" target="_blank" rel="noopener noreferrer">Swayamjit Dalai</a>'
 )
 
