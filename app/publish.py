@@ -17,6 +17,7 @@ import json
 import os
 import re
 import shutil
+from zoneinfo import ZoneInfo
 
 from . import db, exports, report as report_mod
 from .config import BASE_DIR
@@ -60,7 +61,7 @@ def build_bundle(conn, days=None):
     dates = sorted(set(trade_dates) | set(db.report_dates(conn)), reverse=True)
 
     bundle = {
-        "generated": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "generated": dt.datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M IST"),
         "dates": dates,
         "series": {i: client.get(f"/api/series/{i}?days=365").get_json()
                    for i in ("CD", "CP")},
@@ -694,7 +695,7 @@ def build_index(bundle, conn):
         T-Bill, SDL, CD/CP ranges, spreads and USD/INR.</div>
     </a>
   </div>
-  <p class="upd">Data as of {html_mod.escape(bundle['generated'])}. Refreshed automatically each evening.</p>
+  <p class="upd">Data as of {html_mod.escape(bundle['generated'])}. Scheduled every 15 minutes, weekdays 2:00–5:20 PM IST. Source publication and deployment can take a few minutes.</p>
 </div>
 <style>
 .wrap{{max-width:1180px;margin:0 auto;padding:1.5rem 1rem 1rem}}

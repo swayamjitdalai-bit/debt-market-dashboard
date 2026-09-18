@@ -11,18 +11,18 @@
 		<key>PATH</key>
 		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
 	</dict>
-	<!-- Set Program explicitly.  Leaving it inferred made launchd reject each
-	     calendar trigger with EX_CONFIG before the updater was started. -->
+	<!-- Background jobs run from Application Support, outside protected Documents. -->
 	<key>Program</key>
-	<string>/bin/zsh</string>
+	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/venv/bin/python</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/bin/zsh</string>
-		<string>-c</string>
-		<string>exec "/Users/swayamjitdalai/Documents/debt-market-dashboard-main/scripts/run_daily_macos.sh"</string>
+		<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/venv/bin/python</string>
+		<string>-u</string>
+		<string>-m</string>
+		<string>app.scheduled_refresh</string>
 	</array>
 	<key>WorkingDirectory</key>
-	<string>/Users/swayamjitdalai/Documents/debt-market-dashboard-main</string>
+	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/runner</string>
 	<key>StartCalendarInterval</key>
 	<array>
 		<!-- 2 PM IST (14:00, 14:15, 14:30, 14:45) -->
@@ -46,8 +46,8 @@
 		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>20</integer></dict>
 	</array>
 	<key>StandardOutPath</key>
-	<string>/Users/swayamjitdalai/Documents/debt-market-dashboard-main/data/launchd.log</string>
+	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/launchd.log</string>
 	<key>StandardErrorPath</key>
-	<string>/Users/swayamjitdalai/Documents/debt-market-dashboard-main/data/launchd-error.log</string>
+	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/launchd-error.log</string>
 </dict>
 </plist>

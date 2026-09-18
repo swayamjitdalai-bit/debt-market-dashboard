@@ -1,5 +1,30 @@
 # Fixed Income & Debt Market Dashboard
 
+## Automatic refresh (updated 18 September 2026)
+
+Production: https://debt-market-dashboard-main.vercel.app
+
+GitHub `main` is connected to Vercel. Each successful data push triggers a
+production deployment. `python -m app.verify_deploy` checks all five public
+files against the actual live site; jobs fail if deployment cannot be verified.
+
+The schedule is weekdays at 14:00, 14:15, …, 17:15 and 17:20 Asia/Kolkata.
+GitHub Actions retains the same schedule, but GitHub's scheduled-event queue
+can run hours late. For timely local runs, the installed macOS LaunchAgent uses
+an independent checkout under `~/Library/Application Support/DebtMarket/runner`
+and its sibling `venv`, with `python -u -m app.scheduled_refresh`.
+This avoids Documents-folder privacy restrictions without changing macOS
+permissions. The Mac must be awake, logged in and online for these local runs.
+GitHub remains the fallback when it is unavailable; exact cloud start times
+are not guaranteed.
+
+Every local run takes a process lock, syncs `main`, ingests in a fresh temporary
+checkout, commits the public data, pushes, and verifies Vercel. Failures return
+nonzero and preserve the failed checkout for diagnosis; the next run starts
+fresh. Logs are `~/Library/Application Support/DebtMarket/launchd.log` and
+`launchd-error.log`. The old `run_daily_macos.sh` is not the installed job.
+The older evening-only scheduling notes below describe the previous setup.
+
 Two dashboards over one automated data layer. A scheduled job pulls CD/CP/CB
 Repo trades from CCIL F-TRAC and rates from CCIL's public pages into a local
 SQLite database; both dashboards read from that database instead of asking you
