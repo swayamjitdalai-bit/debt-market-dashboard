@@ -21,8 +21,11 @@ def main():
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
     now = dt.datetime.now(ZoneInfo("Asia/Kolkata"))
-    print(f"Scheduler invoked: {now.isoformat()}", flush=True)
-    if not args.force and (now.weekday() >= 5 or not (840 <= now.hour * 60 + now.minute <= 1040)):
+    minutes = now.hour * 60 + now.minute
+    weekday = now.weekday()
+    print(f"Scheduler invoked: {now.isoformat()} (weekday={weekday}, minute={minutes})", flush=True)
+    in_window = weekday < 5 and 840 <= minutes <= 1040
+    if not args.force and not in_window:
         print("Outside weekday 14:00–17:20 IST window", flush=True)
         return 0
     with open(Path(BASE_DIR) / "data" / "refresh.lock", "a") as lock:
