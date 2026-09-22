@@ -516,6 +516,11 @@ def build_report_page(bundle):
         rep = bundle["reports"][date]
         blocks = []
         for heading, key, _kind, columns in exports.SECTIONS:
+            # The desk summary is the final authority.  The separate CCIL
+            # transaction table is useful on an auto-only report but could
+            # otherwise contradict its verified CALL/TREP close.
+            if key == "mm_detail" and rep.get("source_note"):
+                continue
             rows = rep.get(key) or []
             if isinstance(rows, dict):
                 rows = [rows]
@@ -541,7 +546,25 @@ def build_report_page(bundle):
                           f'<tr><td>{brent_value}</td><td>{html_mod.escape(str(brent.get("source") or "Manual"))}</td></tr>'
                           '</table></div>')
 
+        # These three figures are shown separately because the desk's close
+        # format is Close / Open / Day range, not just a spot-rate KPI.
         fx = rep.get("fx") or {}
+        if fx.get("close") is not None:
+            fx_range = f"{_fmt(fx.get('day_low'), 4)} - {_fmt(fx.get('day_high'), 4)}"
+            blocks.append('<h3>USD/INR</h3><div class="tblwrap"><table>'
+                          '<tr><th>Close</th><th>Open</th><th>Day Range</th><th>Source</th></tr>'
+                          f'<tr><td>{_fmt(fx.get("close"), 4)}</td><td>{_fmt(fx.get("open"), 4)}</td>'
+                          f'<td>{fx_range}</td><td>{html_mod.escape(str(fx.get("source") or "Manual"))}</td></tr>'
+                          '</table></div>')
+
+        call, trep, volume = rep.get("call") or {}, rep.get("trep") or {}, rep.get("mm_volume") or {}
+        if any(x.get("ltr") is not None or x.get("weighted_avg") is not None for x in (call, trep)) or volume.get("total_crores") is not None:
+            blocks.insert(0, '<h3>Money Market Closing Summary</h3><div class="tblwrap"><table>'
+                          '<tr><th>Instrument</th><th>LTR</th><th>W.Avg</th><th>Total Volume (Cr)</th></tr>'
+                          f'<tr><td>CALL</td><td>{_fmt(call.get("ltr"), 2)}</td><td>{_fmt(call.get("weighted_avg"), 4)}</td><td>-</td></tr>'
+                          f'<tr><td>TREP</td><td>{_fmt(trep.get("ltr"), 2)}</td><td>{_fmt(trep.get("weighted_avg"), 4)}</td><td>-</td></tr>'
+                          f'<tr><td>Money Market Total</td><td>-</td><td>{_fmt(volume.get("weighted_avg"), 4)}</td><td>{_fmt(volume.get("total_crores"), 2)}</td></tr>'
+                          '</table></div>')
         kpis = []
         if fx.get("close"):
             kpis.append(("USD/INR", f"{fx['close']:.4f}"))
@@ -559,8 +582,14 @@ def build_report_page(bundle):
                           + html_mod.escape(commentary).replace("\n", "<br>") + "</p>")
 
         sources = list(dict.fromkeys(rep.get("_sources") or []))
-        src_html = (f'<div class="srcline">Auto-filled from {html_mod.escape("; ".join(sources))}</div>'
-                    if sources else "")
+        source_note = (rep.get("source_note") or "").strip()
+        if source_note:
+            auto_sources = [s for s in sources if s != source_note]
+            src_html = (f'<div class="srcline">Desk-verified close: {html_mod.escape(source_note)}. '
+                        f'Public feeds retained only as reference inputs: {html_mod.escape("; ".join(auto_sources))}</div>')
+        else:
+            src_html = (f'<div class="srcline">Auto-filled from {html_mod.escape("; ".join(sources))}</div>'
+                        if sources else "")
 
         sections.append(
             f'<section class="day" data-date="{date}" style="display:none">'

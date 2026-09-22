@@ -33,7 +33,7 @@ SECTIONS = [
         ("Rate", "rate_today", NUM), ("Prev", "rate_prev", NUM),
         ("Chg (bps)", "change_bps", "{:+.1f}")]),
     ("SDL", "sdl_range", "table", [
-        ("Tenor", "tenor_label", None), ("Security", "security_name", None),
+        ("Tenor", "tenor_label", None), ("Range", "range_text", None), ("Security", "security_name", None),
         ("Rate", "rate_today", NUM), ("Prev", "rate_prev", NUM)]),
     ("CD Secondary - Tenor Ranges", "cd_money_market", "table", [
         ("Tenor", "tenor_label", None), ("Low", "low", PCT), ("High", "high", PCT),
