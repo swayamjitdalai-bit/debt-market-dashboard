@@ -207,14 +207,14 @@ def _fmt(v, digits=2):
 
 
 def build_cbrics_page(rows):
-    """Static NSE CBRICS deal log with the desk's ₹5 Cr institutional view."""
+    """Static NSE CBRICS deal log with a configurable deal-value filter."""
     payload = json.dumps(rows, separators=(",", ":"))
     body = f"""
 <div class="wrap">
   <div class="heading">
     <div>
       <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em;">CBRICS Bond Market Watch</h1>
-      <p class="sub">Corporate bond deals reported on NSE CBRICS. Values are normalized to ₹ Crores. The default view follows the ICMS blotter convention: listed OTC deals ≥ ₹5 Cr.</p>
+      <p class="sub">Corporate bond deals reported on NSE CBRICS. Values are normalized to ₹ Crores. Showing institutional deals ≥ ₹25 Cr by default.</p>
     </div>
     <a class="source" href="https://www.nseindia.com/market-data/debt-market-reporting-corporate-bonds-traded-on-exchange" target="_blank" rel="noopener noreferrer"><i class="ti ti-external-link"></i> NSE CBRICS Source</a>
   </div>
@@ -222,9 +222,9 @@ def build_cbrics_page(rows):
   <div class="toolbar">
     <input id="search" type="search" placeholder="Search ISIN or Issuer..." aria-label="Search bond deals">
     <select id="minVal" aria-label="Minimum Trade Value">
-      <option value="5" selected>Deals ≥ ₹5 Cr (Desk View)</option>
+      <option value="5">Deals ≥ ₹5 Cr</option>
       <option value="0">All Deals (Any Value)</option>
-      <option value="25">Deals ≥ ₹25 Cr</option>
+      <option value="25" selected>Deals ≥ ₹25 Cr (Default)</option>
       <option value="50">Deals ≥ ₹50 Cr</option>
       <option value="100">Deals ≥ ₹100 Cr</option>
     </select>
