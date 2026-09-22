@@ -183,7 +183,8 @@ def upsert_fx(conn, date, rec):
         """INSERT INTO fx_rates (date,pair,close,open,day_low,day_high,as_of,source)
            VALUES (?,?,?,?,?,?,?,?)
            ON CONFLICT(date,pair) DO UPDATE SET
-             close=excluded.close, as_of=excluded.as_of, source=excluded.source""",
+             close=excluded.close, open=excluded.open, day_low=excluded.day_low,
+             day_high=excluded.day_high, as_of=excluded.as_of, source=excluded.source""",
         (date, rec.get("pair", "USD/INR"), rec.get("close"), rec.get("open"),
          rec.get("day_low"), rec.get("day_high"), rec.get("as_of"), rec.get("source")))
     conn.commit()

@@ -13,6 +13,36 @@ FRANKFURTER = "https://api.frankfurter.dev/v1/"
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILBRENTEU"
 YAHOO_BRENT = "https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=3mo"
 YAHOO_BRENT_BACKUP = "https://query2.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=3mo"
+YAHOO_USDINR = "https://query1.finance.yahoo.com/v8/finance/chart/INR=X?interval=1d&range=3mo"
+
+
+def _usdinr_session_range(cutoff):
+    """Return Yahoo's USD/INR session Open/Low/High on or before cutoff.
+
+    FBIL supplies the reference close; it does not expose an intraday range in
+    the free endpoint used here.  Yahoo's FX daily candle supplies the three
+    missing fields without replacing the official reference close.
+    """
+    try:
+        response = requests.get(YAHOO_USDINR, headers={"User-Agent": USER_AGENT},
+                                timeout=HTTP_TIMEOUT)
+        response.raise_for_status()
+        result = (response.json().get("chart", {}).get("result") or [])[0]
+        quotes = (result.get("indicators", {}).get("quote") or [{}])[0]
+        candles = []
+        for ts, opening, low, high in zip(result.get("timestamp") or [],
+                                          quotes.get("open") or [], quotes.get("low") or [],
+                                          quotes.get("high") or []):
+            day = dt.datetime.fromtimestamp(ts, tz=dt.timezone.utc).date().isoformat()
+            if day <= cutoff and all(value is not None for value in (opening, low, high)):
+                candles.append((day, float(opening), float(low), float(high)))
+        if candles:
+            day, opening, low, high = max(candles)
+            return {"as_of": day, "open": round(opening, 4),
+                    "day_low": round(low, 4), "day_high": round(high, 4)}
+    except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
+        pass
+    return None
 
 
 def usdinr(date=None):
@@ -32,13 +62,18 @@ def usdinr(date=None):
     rate = (payload.get("rates") or {}).get("INR")
     if rate is None:
         return None
-    return {
+    out = {
         "pair": "USD/INR",
         "close": float(rate),
         "as_of": payload.get("date"),
         "source": "FBIL reference rate via Frankfurter",
         "stale": payload.get("date") != when,
     }
+    session = _usdinr_session_range(when)
+    if session:
+        out.update({key: session[key] for key in ("open", "day_low", "day_high")})
+        out["source"] = "FBIL reference close via Frankfurter; Yahoo Finance USD/INR session range"
+    return out
 
 
 def _brent_yahoo(date=None):
@@ -150,4 +185,3 @@ def fetch_all(date=None):
         else:
             notes[name] = f"as of {value['as_of']}"
     return data, notes
-
