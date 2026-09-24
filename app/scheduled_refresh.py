@@ -13,8 +13,8 @@ from zoneinfo import ZoneInfo
 from .config import BASE_DIR
 
 
-def run(*args, cwd=BASE_DIR):
-    subprocess.run(args, cwd=cwd, check=True)
+def run(*args, cwd=BASE_DIR, timeout=None):
+    subprocess.run(args, cwd=cwd, check=True, timeout=timeout)
 
 
 def run_git(*args, cwd=BASE_DIR, attempts=3):
@@ -27,8 +27,8 @@ def run_git(*args, cwd=BASE_DIR, attempts=3):
     last_error = None
     for attempt in range(1, attempts + 1):
         try:
-            return run("git", *args, cwd=cwd)
-        except subprocess.CalledProcessError as exc:
+            return run("git", *args, cwd=cwd, timeout=120)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             last_error = exc
             if attempt == attempts:
                 break
@@ -85,6 +85,6 @@ def main():
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (subprocess.CalledProcessError, RuntimeError) as exc:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, RuntimeError) as exc:
         print(f"REFRESH FAILED: {exc}", file=sys.stderr, flush=True)
         raise SystemExit(1)
