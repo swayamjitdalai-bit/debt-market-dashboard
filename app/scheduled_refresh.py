@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -14,6 +15,27 @@ from .config import BASE_DIR
 
 def run(*args, cwd=BASE_DIR):
     subprocess.run(args, cwd=cwd, check=True)
+
+
+def run_git(*args, cwd=BASE_DIR, attempts=3):
+    """Retry transient GitHub SSH transport failures before giving up.
+
+    The cloud workflow remains the primary scheduler, but this runner is a
+    useful independent backup.  A short network drop must not lose the entire
+    refresh window.
+    """
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return run("git", *args, cwd=cwd)
+        except subprocess.CalledProcessError as exc:
+            last_error = exc
+            if attempt == attempts:
+                break
+            delay = attempt * 10
+            print(f"Git command failed (attempt {attempt}/{attempts}); retrying in {delay}s", flush=True)
+            time.sleep(delay)
+    raise last_error
 
 
 def main():
@@ -36,7 +58,7 @@ def main():
             return 0
         if subprocess.check_output(["git", "status", "--porcelain"], cwd=BASE_DIR).strip():
             raise RuntimeError("Background checkout has uncommitted changes; preserve them and inspect the log")
-        run("git", "pull", "--ff-only", "origin", "main")
+        run_git("pull", "--ff-only", "origin", "main")
         # Each run gets a fresh checkout so a failed fetch/push cannot poison
         # tomorrow's run. Failed checkouts remain available for diagnosis.
         runs = Path(BASE_DIR) / "data" / "runs"
@@ -54,7 +76,7 @@ def main():
         if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=checkout).returncode:
             run("git", "commit", "-m", f"Market refresh {now:%Y-%m-%d %H:%M} IST", cwd=checkout)
         # Fail visibly on a competing remote update; never discard either database.
-        run("git", "push", "origin", "HEAD:main", cwd=checkout)
+        run_git("push", "origin", "HEAD:main", cwd=checkout)
         run(sys.executable, "-u", "-m", "app.verify_deploy", cwd=checkout)
         shutil.rmtree(checkout)
         return 0
