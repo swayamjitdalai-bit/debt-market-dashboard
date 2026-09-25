@@ -70,14 +70,18 @@ def main():
         for key in ("user.name", "user.email"):
             value = subprocess.check_output(["git", "config", key], cwd=BASE_DIR, text=True).strip()
             run("git", "config", key, value, cwd=checkout)
-        run(sys.executable, "-u", "-m", "app.ingest", "--days", "7", cwd=checkout)
+        # Intraday runs only need the current trading day.  Re-downloading a
+        # seven-day window took longer than the 15-minute cadence and caused
+        # queued runs to publish late.  Historical repairs remain a manual
+        # ``app.ingest --days 7`` operation.
+        run(sys.executable, "-u", "-m", "app.ingest", "--days", "1", cwd=checkout)
         run(sys.executable, "-u", "-m", "app.publish", cwd=checkout)
         run("git", "add", "data/market.db", "data/cbrics.csv", "public", "vercel.json", cwd=checkout)
         if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=checkout).returncode:
             run("git", "commit", "-m", f"Market refresh {now:%Y-%m-%d %H:%M} IST", cwd=checkout)
         # Fail visibly on a competing remote update; never discard either database.
         run_git("push", "origin", "HEAD:main", cwd=checkout)
-        run(sys.executable, "-u", "-m", "app.verify_deploy", cwd=checkout)
+        run(sys.executable, "-u", "-m", "app.verify_deploy", "--timeout", "90", cwd=checkout)
         shutil.rmtree(checkout)
         return 0
 

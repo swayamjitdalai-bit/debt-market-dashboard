@@ -24,9 +24,9 @@ permissions:
 
 concurrency:
   group: daily-market-ingest
-  # Let a slow source fetch complete; cancelling it at the next interval left
-  # the dashboard with an incomplete update.
-  cancel-in-progress: false
+  # Scheduled runs now ingest only today's slice, so the newest trigger should
+  # win rather than allowing an old queued job to publish after market close.
+  cancel-in-progress: true
 
 jobs:
   update-and-deploy:
@@ -58,7 +58,10 @@ jobs:
 
       - name: Ingest Market Data
         env:
-          DAYS: ${{ github.event.inputs.days || '7' }}
+          # Intraday schedule: only today's data, so it finishes before the
+          # next 15-minute trigger. Manual dispatch keeps the 7-day repair
+          # window selected in the workflow form.
+          DAYS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.days || '1' }}
           TZ: Asia/Kolkata
         run: |
           git pull --ff-only origin main
@@ -91,7 +94,7 @@ jobs:
           fi
 
       - name: Verify live Vercel deployment
-        run: python -u -m app.verify_deploy
+        run: python -u -m app.verify_deploy --timeout 90
 
       - name: Publish Summary to GitHub Actions
         run: |
