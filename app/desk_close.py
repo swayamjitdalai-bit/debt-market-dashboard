@@ -28,7 +28,8 @@ def _curve(rows):
 
 
 def _ranges(rows):
-    return [{"tenor_label": tenor, "low": low, "high": high}
+    return [{"tenor_label": tenor, "low": low, "high": high,
+             "range_text": f"{low:.4f} – {high:.4f}"}
             for tenor, low, high in rows]
 
 

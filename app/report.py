@@ -165,6 +165,11 @@ def _psu_bond_block(conn, date):
             pass
 
     summary = derive.psu_bond_summary(cb_trades, cbrics_rows)
+    # The closing note quotes a clean tenor range, not a second rating bucket.
+    for row in summary.get("aaa", []):
+        low, high = row.get("low"), row.get("high")
+        if low is not None and high is not None:
+            row["range_text"] = f"{low:.4f} – {high:.4f}"
     return summary.get("aaa", []), summary.get("aa", []), used
 
 

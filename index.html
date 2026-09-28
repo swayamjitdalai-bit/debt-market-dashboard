@@ -123,18 +123,11 @@
   </section>
 </div>
 
-<div class="grid2">
-  <section>
-    <h2>AA PSU Corporate Bonds <span class="badge manual">Manual</span></h2>
-    <div id="aaRows"></div>
-    <button class="add-btn" onclick="addRangeRow('aaRows')">+ Add tenor</button>
-  </section>
-  <section>
-    <h2>OIS Curve <span class="badge manual">Manual</span></h2>
-    <div id="oisRows"></div>
-    <button class="add-btn" onclick="addOisRow()">+ Add tenor</button>
-  </section>
-</div>
+<section>
+  <h2>OIS Curve <span class="badge manual">Manual</span></h2>
+  <div id="oisRows"></div>
+  <button class="add-btn" onclick="addOisRow()">+ Add tenor</button>
+</section>
 
 <div class="grid2">
   <section>
@@ -321,7 +314,6 @@ function collectPayload() {
     })).filter(r => r.tenor_label),
     sdl_range: rangeRows("sdlRows"),
     aaa_psu_corp: rangeRows("aaaRows"),
-    aa_psu_corp: rangeRows("aaRows"),
     cd_money_market: rangeRows("cdRows"),
     ois_curve: [...document.getElementById("oisRows").children].map(row => ({
       tenor_label: row.querySelector(".o-tenor").value,
@@ -367,7 +359,6 @@ function populateForm(d) {
   (d.sdl_range || []).forEach(s =>
     addRangeRow("sdlRows", s.tenor_label, s.low ?? s.rate_today, s.high ?? s.rate_today));
   (d.aaa_psu_corp || []).forEach(a => addRangeRow("aaaRows", a.tenor_label, a.low, a.high));
-  (d.aa_psu_corp || []).forEach(a => addRangeRow("aaRows", a.tenor_label, a.low, a.high));
   (d.cd_money_market || []).forEach(c => addRangeRow("cdRows", c.tenor_label, c.low, c.high));
   (d.ois_curve || []).forEach(o => addOisRow(o.tenor_label, o.rate_today, o.rate_prev));
   (d.tbill_range || []).forEach(t => addTbillRow(t.tenor_label, t.rate_today, t.rate_prev));
@@ -392,7 +383,6 @@ function seedEmptySections() {
   if (empty("gsecRows")) for (let i = 0; i < 5; i++) addGsecRow();
   if (empty("benchRows")) for (let i = 0; i < 4; i++) addBenchRow();
   if (empty("aaaRows")) ["3 Year", "5 Year", "10 Year"].forEach(t => addRangeRow("aaaRows", t));
-  if (empty("aaRows")) ["3 Year", "5 Year", "10 Year"].forEach(t => addRangeRow("aaRows", t));
   if (empty("oisRows")) ["1 Year", "3 Year", "5 Year", "10 Year"].forEach(t => addOisRow(t));
   if (empty("sdlRows")) ["3 Year", "5 Year", "10 Year", "15 Year"].forEach(t => addRangeRow("sdlRows", t));
   if (empty("cdRows")) ["3 Months", "6 Months", "12 Month"].forEach(t => addRangeRow("cdRows", t));
@@ -431,8 +421,6 @@ function applyPublicData(auto) {
       o => addOisRow(o.tenor_label, o.rate_today, o.rate_prev ?? ""));
     refill("aaaRows", c.aaa_psu_corp,
       r => addRangeRow("aaaRows", r.tenor_label, r.low, r.high));
-    refill("aaRows", c.aa_psu_corp,
-      r => addRangeRow("aaRows", r.tenor_label, r.low, r.high));
 
     // Automated: derived from F-TRAC trades and CCIL indicative yields.
     refill("cdRows", c.cd_money_market,
@@ -509,7 +497,7 @@ const BADGE_FOR = {
   "MONEY MARKET": "call", "BENCHMARK G-SEC CURVE": "benchmark_curve",
   "T-BILL RANGE": "tbill_range", "SDL RANGE": "sdl_range",
   "MONEY MARKET (CD)": "cd_money_market", "TOP TRADED G-SECS": "top_traded_gsecs",
-  "AAA PSU CORPORATE BONDS": "aaa_psu_corp", "AA PSU CORPORATE BONDS": "aa_psu_corp",
+  "AAA PSU CORPORATE BONDS": "aaa_psu_corp",
   "OIS CURVE": "ois_curve", "BRENT OIL": "brent",
 };
 

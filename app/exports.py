@@ -48,11 +48,7 @@ SECTIONS = [
         ("CD Wtd Avg", "cd_wavg", NUM), ("CD Spread (bps)", "cd_spread_bps", "{:+.1f}"),
         ("CP Wtd Avg", "cp_wavg", NUM), ("CP Spread (bps)", "cp_spread_bps", "{:+.1f}")]),
     ("AAA PSU Corporate Bonds", "aaa_psu_corp", "table", [
-        ("Tenor", "tenor_label", None), ("Low", "low", PCT), ("High", "high", PCT),
-        ("Wtd Avg", "weighted_avg", NUM)]),
-    ("AA PSU Corporate Bonds", "aa_psu_corp", "table", [
-        ("Tenor", "tenor_label", None), ("Low", "low", PCT), ("High", "high", PCT),
-        ("Wtd Avg", "weighted_avg", NUM)]),
+        ("Tenor", "tenor_label", None), ("Range", "range_text", None)]),
     ("OIS Curve", "ois_curve", "table", [
         ("Tenor", "tenor_label", None), ("Rate", "rate_today", NUM),
         ("Prev", "rate_prev", NUM), ("Chg (bps)", "change_bps", "{:+.1f}")]),
