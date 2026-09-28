@@ -265,14 +265,13 @@ function addNewsRow(category = "Macro", headline = "") {
 }
 
 function clearAllRows() {
-  ["gsecRows","benchRows","sdlRows","aaaRows","aaRows","oisRows","tbillRows","cdRows","newsRows"]
+  ["gsecRows","benchRows","sdlRows","aaaRows","oisRows","tbillRows","cdRows","newsRows"]
     .forEach(id => document.getElementById(id).innerHTML = "");
 }
 
 function seedDefaultRows() {
   ["3 Year","5 Year","10 Year","15 Year"].forEach(t => addRangeRow("sdlRows", t));
   ["3 Year","5 Year","10 Year"].forEach(t => addRangeRow("aaaRows", t));
-  ["3 Year","5 Year","10 Year"].forEach(t => addRangeRow("aaRows", t));
   ["3 Months","6 Months","12 Month"].forEach(t => addRangeRow("cdRows", t));
   ["1 Year","3 Year","5 Year","10 Year"].forEach(t => addOisRow(t));
   ["91 Days","182 Days","364 Days"].forEach(t => addTbillRow(t));
