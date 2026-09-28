@@ -8,15 +8,17 @@ GitHub `main` is connected to Vercel. Each successful data push triggers a
 production deployment. `python -m app.verify_deploy` checks all five public
 files against the actual live site; jobs fail if deployment cannot be verified.
 
-The schedule is weekdays at 14:00, 14:15, …, 17:15 and 17:20 Asia/Kolkata.
-GitHub Actions retains the same schedule, but GitHub's scheduled-event queue
-can run hours late. For timely local runs, the installed macOS LaunchAgent uses
-an independent checkout under `~/Library/Application Support/DebtMarket/runner`
-and its sibling `venv`, with `python -u -m app.scheduled_refresh`.
+The cloud schedule is weekdays every 15 minutes from 14:02 to 17:19
+Asia/Kolkata. It intentionally avoids `:00`, `:15`, `:30`, and `:45`, which
+GitHub identifies as high-load scheduling times. The installed macOS
+LaunchAgent uses an independent checkout under
+`~/Library/Application Support/DebtMarket/runner` and its sibling `venv`, with
+`python -u -m app.scheduled_refresh`, as an additional backup only.
 This avoids Documents-folder privacy restrictions without changing macOS
 permissions. The Mac must be awake, logged in and online for these local runs.
-GitHub remains the fallback when it is unavailable; exact cloud start times
-are not guaranteed.
+GitHub Actions performs the normal cloud refresh, so the dashboard continues
+to update when the Mac is off. The dashboard publishes the exact refresh time
+in its data bundle for verification.
 
 Every local run takes a process lock, syncs `main`, ingests in a fresh temporary
 checkout, commits the public data, pushes, and verifies Vercel. Failures return
