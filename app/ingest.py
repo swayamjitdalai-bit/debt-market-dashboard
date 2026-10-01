@@ -123,7 +123,7 @@ def ingest_cbrics(conn):
     try:
         count = cbrics.refresh(path)
     except Exception as exc:
-        note = f"{exc.__class__.__name__}: {exc}"
+        note = f"failed: {exc.__class__.__name__}: {exc}"
         db.log(conn, None, "nse:cbrics", "error", note)
         return 0, note
     note = f"{count} live listed-OTC rows refreshed"
@@ -131,7 +131,22 @@ def ingest_cbrics(conn):
     return count, note
 
 
-def run(date=None, days=1, instruments=("CD", "CP", "CB"), verbose=True):
+def _source_failures(trade_notes, ccil_notes, fbil_notes, cbrics_note):
+    """Return explicit source failures from this run, not historic log rows."""
+    failures = []
+    for source, note in trade_notes.items():
+        if "LAYOUT CHANGED" in note or "network error" in note:
+            failures.append(f"F-TRAC {source}: {note}")
+    for family, notes in (("CCIL", ccil_notes), ("FBIL", fbil_notes)):
+        for source, note in notes.items():
+            if note.startswith("failed:"):
+                failures.append(f"{family} {source}: {note}")
+    if cbrics_note.startswith("failed:"):
+        failures.append(f"NSE CBRICS: {cbrics_note}")
+    return failures
+
+
+def run(date=None, days=1, instruments=("CD", "CP", "CB"), verbose=True, strict=False):
     target = date or db.today()
     to_date = dt.date.fromisoformat(target)
     from_date = to_date - dt.timedelta(days=max(days, 1) - 1)
@@ -185,6 +200,13 @@ def run(date=None, days=1, instruments=("CD", "CP", "CB"), verbose=True):
     say("\n[5/5] NSE CBRICS corporate-bond market watch")
     _, cbrics_note = ingest_cbrics(conn)
     say(f"      -> {cbrics_note}")
+
+    failures = _source_failures(notes, ccil_notes, fbil_notes, cbrics_note)
+    if strict and failures:
+        detail = "; ".join(failures)
+        db.log(conn, target, "run", "error", f"publish blocked: {detail}")
+        conn.close()
+        raise RuntimeError(f"publish blocked because a required source failed: {detail}")
 
     db.log(conn, target, "run", "completed", f"{count} trade rows")
 
@@ -257,12 +279,14 @@ def main(argv=None):
     p.add_argument("--instruments", default="CD,CP,CB",
                    help="comma-separated subset of CD,CP,CB,NC")
     p.add_argument("--quiet", action="store_true")
+    p.add_argument("--strict", action="store_true",
+                   help="fail instead of publishing when a required source fails")
     args = p.parse_args(argv)
 
     days = args.backfill or args.days
     instruments = tuple(x.strip().upper() for x in args.instruments.split(",") if x.strip())
     try:
-        run(args.date, days, instruments, verbose=not args.quiet)
+        run(args.date, days, instruments, verbose=not args.quiet, strict=args.strict)
     except Exception as e:                                       # noqa: BLE001
         print(f"Ingest failed: {e.__class__.__name__}: {e}", file=sys.stderr)
         return 1

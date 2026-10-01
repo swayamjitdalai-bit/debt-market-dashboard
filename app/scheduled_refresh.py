@@ -74,7 +74,7 @@ def main():
         # seven-day window took longer than the 15-minute cadence and caused
         # queued runs to publish late.  Historical repairs remain a manual
         # ``app.ingest --days 7`` operation.
-        run(sys.executable, "-u", "-m", "app.ingest", "--days", "1", cwd=checkout)
+        run(sys.executable, "-u", "-m", "app.ingest", "--days", "1", "--strict", cwd=checkout)
         run(sys.executable, "-u", "-m", "app.publish", cwd=checkout)
         run("git", "add", "data/market.db", "data/cbrics.csv", "public", "vercel.json", cwd=checkout)
         if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=checkout).returncode:

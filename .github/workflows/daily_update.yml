@@ -64,7 +64,7 @@ jobs:
         run: |
           git pull --ff-only origin main
           echo "Running market ingestion for the last $DAYS days..."
-          python -m app.ingest --days "$DAYS"
+          python -m app.ingest --days "$DAYS" --strict
 
       - name: Build Static Dashboard Bundle
         run: |
