@@ -2,14 +2,11 @@ name: Daily Market Data Update & Deployment
 
 on:
   schedule:
-    # Every 15 minutes from 2:02 PM to 5:19 PM IST.
-    # GitHub documents that schedules at the start of an hour can be delayed
-    # or dropped during high load.  These deliberately use off-peak minutes.
-    - cron: '32,47 08 * * 1-5'  # 14:02, 14:17 IST
-    - cron: '02,17,32,47 09 * * 1-5'  # 14:32–15:17 IST
-    - cron: '02,17,32,47 10 * * 1-5'  # 15:32–16:17 IST
-    - cron: '02,17,32,47 11 * * 1-5'  # 16:32–17:17 IST
-    - cron: '49 11 * * 1-5'  # 17:19 IST final closing sweep
+    # Closing-window updates only: 5:02, 5:17 and 5:29 PM IST.
+    # Off-peak minutes avoid GitHub's high-load :00/:15/:30 scheduling slots.
+    - cron: '32 11 * * 1-5'  # 17:02 IST
+    - cron: '47 11 * * 1-5'  # 17:17 IST
+    - cron: '59 11 * * 1-5'  # 17:29 IST final closing sweep
   workflow_dispatch:
     inputs:
       days:

@@ -25,25 +25,10 @@
 	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/runner</string>
 	<key>StartCalendarInterval</key>
 	<array>
-		<!-- 2 PM IST (14:00, 14:15, 14:30, 14:45) -->
-		<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>0</integer></dict>
-		<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>15</integer></dict>
-		<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>30</integer></dict>
-		<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>45</integer></dict>
-		<!-- 3 PM IST (15:00, 15:15, 15:30, 15:45) -->
-		<dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>0</integer></dict>
-		<dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>15</integer></dict>
-		<dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>30</integer></dict>
-		<dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>45</integer></dict>
-		<!-- 4 PM IST (16:00, 16:15, 16:30, 16:45) -->
-		<dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>0</integer></dict>
-		<dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>15</integer></dict>
-		<dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>30</integer></dict>
-		<dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>45</integer></dict>
-		<!-- 5 PM IST (17:00, 17:15, 17:20) -->
-		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
-		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>15</integer></dict>
-		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>20</integer></dict>
+		<!-- Closing window: 5:02 PM, 5:17 PM and 5:29 PM IST. -->
+		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>2</integer></dict>
+		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>17</integer></dict>
+		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>29</integer></dict>
 	</array>
 	<key>StandardOutPath</key>
 	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/launchd.log</string>

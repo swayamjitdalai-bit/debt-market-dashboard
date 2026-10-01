@@ -46,9 +46,9 @@ def main():
     minutes = now.hour * 60 + now.minute
     weekday = now.weekday()
     print(f"Scheduler invoked: {now.isoformat()} (weekday={weekday}, minute={minutes})", flush=True)
-    in_window = weekday < 5 and 840 <= minutes <= 1040
+    in_window = weekday < 5 and 1020 <= minutes <= 1050
     if not args.force and not in_window:
-        print("Outside weekday 14:00–17:20 IST window", flush=True)
+        print("Outside weekday 17:00–17:30 IST closing window", flush=True)
         return 0
     with open(Path(BASE_DIR) / "data" / "refresh.lock", "a") as lock:
         try:

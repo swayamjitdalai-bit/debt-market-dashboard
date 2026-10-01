@@ -8,8 +8,8 @@ GitHub `main` is connected to Vercel. Each successful data push triggers a
 production deployment. `python -m app.verify_deploy` checks all five public
 files against the actual live site; jobs fail if deployment cannot be verified.
 
-The cloud schedule is weekdays every 15 minutes from 14:02 to 17:19
-Asia/Kolkata. It intentionally avoids `:00`, `:15`, `:30`, and `:45`, which
+The cloud schedule runs only during the weekday closing window: 17:02, 17:17,
+and 17:29 Asia/Kolkata. It intentionally avoids `:00`, `:15`, and `:30`, which
 GitHub identifies as high-load scheduling times. The installed macOS
 LaunchAgent uses an independent checkout under
 `~/Library/Application Support/DebtMarket/runner` and its sibling `venv`, with
