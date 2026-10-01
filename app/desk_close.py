@@ -122,6 +122,18 @@ DESK_CLOSES = {
         "fx": {"pair": "USD/INR", "close": 95.7800, "open": 95.8600,
                "day_low": 95.7200, "day_high": 95.8600, "source": SOURCE},
     },
+    # The investment-banking desk publishes indicative closing levels rather
+    # than the literal min/max of every F-TRAC print.  Keep these verified
+    # desk figures as an overlay so subsequent automated refreshes do not
+    # replace the closing report with the broader transaction range.
+    "2026-09-30": {
+        "source_note": SOURCE,
+        "cd_money_market": _ranges([
+            ("3 Months", 6.50, 6.55),
+            ("6 Months", 6.80, 6.85),
+            ("12 Months", 7.35, 7.45),
+        ]),
+    },
 }
 
 
