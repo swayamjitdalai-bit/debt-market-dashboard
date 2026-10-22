@@ -7,6 +7,10 @@ Production: https://debt-market-dashboard-main.vercel.app
 GitHub `main` is connected to Vercel. Each successful data push triggers a
 production deployment. `python -m app.verify_deploy` checks all five public
 files against the actual live site; jobs fail if deployment cannot be verified.
+Verification allows 15 minutes for Vercel build queues and deployment propagation.
+Refresh jobs run sequentially so a newer bundle cannot replace one being verified.
+On 21 October the deployment completed about nine minutes after the push; the
+previous 90-second check had already reported a failure.
 
 The cloud schedule runs only during the weekday closing window: 17:02, 17:17,
 and 17:29 Asia/Kolkata. It intentionally avoids `:00`, `:15`, and `:30`, which

@@ -81,7 +81,7 @@ def main():
             run("git", "commit", "-m", f"Market refresh {now:%Y-%m-%d %H:%M} IST", cwd=checkout)
         # Fail visibly on a competing remote update; never discard either database.
         run_git("push", "origin", "HEAD:main", cwd=checkout)
-        run(sys.executable, "-u", "-m", "app.verify_deploy", "--timeout", "90", cwd=checkout)
+        run(sys.executable, "-u", "-m", "app.verify_deploy", "--timeout", "900", cwd=checkout)
         shutil.rmtree(checkout)
         return 0
 

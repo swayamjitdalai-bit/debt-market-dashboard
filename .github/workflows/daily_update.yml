@@ -22,14 +22,14 @@ permissions:
 
 concurrency:
   group: daily-market-ingest
-  # Scheduled runs now ingest only today's slice, so the newest trigger should
-  # win rather than allowing an old queued job to publish after market close.
-  cancel-in-progress: true
+  # Let a deployment finish verification before another refresh can replace it.
+  # GitHub keeps at most the latest pending run in this concurrency group.
+  cancel-in-progress: false
 
 jobs:
   update-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Checkout Repository
@@ -53,6 +53,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Test deployment verification
+        run: python -m unittest discover -s tests
 
       - name: Ingest Market Data
         env:
@@ -92,7 +95,7 @@ jobs:
           fi
 
       - name: Verify live Vercel deployment
-        run: python -u -m app.verify_deploy --timeout 90
+        run: python -u -m app.verify_deploy --timeout 900
 
       - name: Publish Summary to GitHub Actions
         run: |
