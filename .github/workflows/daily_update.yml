@@ -55,7 +55,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Test deployment verification
-        run: python -m unittest discover -s tests
+        run: |
+          python -m unittest discover -s tests
+          node tests/test_chart_rendering.cjs
 
       - name: Ingest Market Data
         env:

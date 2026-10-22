@@ -785,11 +785,17 @@ function lineChart(host,{title,sub,dates,series,unit='%',digits=2,height=250}){
     ?`<text class="tick" x="${X(i).toFixed(1)}" y="${H-10}" text-anchor="middle">${esc(shortDate(d))}</text>`:'').join('');
 
   const paths=pts.map(s=>{
-    let d='',open=false;
-    s.values.forEach((v,i)=>{ if(v==null){open=false;return;}
-      d+=(open?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; open=true; });
-    return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2"
-      stroke-linecap="round" stroke-linejoin="round"/>`;
+    const observed=s.values.map((v,i)=>({v,i})).filter(p=>p.v!=null);
+    // Dashed connectors span missing observations; they are not daily quotes.
+    const segments=observed.slice(1).map((p,j)=>{
+      const prev=observed[j], gap=p.i-prev.i>1;
+      return `<path d="M${X(prev.i).toFixed(1)} ${Y(prev.v).toFixed(1)} L${X(p.i).toFixed(1)} ${Y(p.v).toFixed(1)}"
+        fill="none" stroke="${s.color}" stroke-width="2" ${gap?'stroke-dasharray="5 4"':''}/>`;
+    }).join('');
+    // Isolated observations must remain visible, especially the sparse 12M tenor.
+    const dots=observed.map(p=>`<circle class="observed-point" cx="${X(p.i).toFixed(1)}"
+      cy="${Y(p.v).toFixed(1)}" r="3" fill="${s.color}" stroke="#fff" stroke-width="1"/>`).join('');
+    return segments+dots;
   }).join('');
 
   // Direct end labels — mandatory at four series, and the relief for the two
@@ -816,8 +822,8 @@ function lineChart(host,{title,sub,dates,series,unit='%',digits=2,height=250}){
       ${paths}${ends}
       <rect class="hit" x="${m.l}" y="${m.t}" width="${iw}" height="${ih}"/>
     </svg>
-    <div class="legend">${pts.map(s=>
-      `<span class="legend-item"><span class="legend-swatch" style="background:${s.color}"></span>${esc(s.name)}</span>`).join('')}</div>`;
+    <div class="legend">${series.map(s=>
+      `<span class="legend-item"><span class="legend-swatch" style="background:${s.color}"></span>${esc(s.name)} (${s.values.filter(v=>v!=null).length} observations)</span>`).join('')}</div>`;
 
   const svg=host.querySelector('svg'), hit=host.querySelector('.hit'), cross=host.querySelector('.cross');
   const line=cross.querySelector('line');
@@ -984,7 +990,7 @@ function renderCharts(type){
   }else{
     lineChart(document.getElementById('trend-'+type),{
       title:`${label} yield trend by tenor`,
-      sub:`Volume-weighted average, ${d.dates.length} trading days to ${shortDate(d.dates[d.dates.length-1])}`,
+      sub:`Volume-weighted average · ${d.dates.length} trading days to ${shortDate(d.dates[d.dates.length-1])}. Dots: recorded yields; dashed lines: gaps with no recorded yield. No values are filled in.`,
       dates:d.dates, series, digits:2, height:250});
   }
   curveChart(document.getElementById('curve-'+type),

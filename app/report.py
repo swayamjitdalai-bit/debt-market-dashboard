@@ -299,8 +299,7 @@ def tenor_series(conn, instrument, days=30, end_date=None):
 
     for date in dates:
         trades = db.trades(conn, date, instrument, "SEC")
-        if not trades:
-            continue
+        # Keep one entry per axis date, including days without this instrument.
         summary = {r["tenor_label"]: r for r in derive.tenor_summary(trades)}
         for tenor in CHART_TENORS:
             row = summary.get(tenor)
