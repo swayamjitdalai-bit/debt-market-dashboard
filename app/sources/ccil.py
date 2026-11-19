@@ -18,8 +18,11 @@ Note: CCIL's site terms restrict commercial redistribution of this data. This
 reads the public pages for desk use; check with CCIL before republishing.
 """
 import re
+import time
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 from ..config import HTTP_TIMEOUT, USER_AGENT
 
@@ -45,10 +48,27 @@ class LayoutError(RuntimeError):
 
 
 def _get(slug):
-    r = requests.get(BASE + slug, headers={"User-Agent": USER_AGENT},
-                     timeout=HTTP_TIMEOUT)
-    r.raise_for_status()
-    return r.text
+    s = requests.Session()
+    s.headers.update({"User-Agent": USER_AGENT})
+    retries = Retry(
+        total=3,
+        backoff_factor=1.0,
+        status_forcelist=[500, 502, 503, 504],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retries)
+    s.mount("https://", adapter)
+    s.mount("http://", adapter)
+
+    for attempt in range(1, 4):
+        try:
+            r = s.get(BASE + slug, timeout=HTTP_TIMEOUT)
+            r.raise_for_status()
+            return r.text
+        except requests.RequestException:
+            if attempt == 3:
+                raise
+            time.sleep(attempt * 2)
 
 
 def _text(cell):

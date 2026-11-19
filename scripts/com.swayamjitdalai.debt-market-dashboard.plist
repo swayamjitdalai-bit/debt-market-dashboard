@@ -25,10 +25,13 @@
 	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/runner</string>
 	<key>StartCalendarInterval</key>
 	<array>
-		<!-- Closing window: 5:02 PM, 5:17 PM and 5:29 PM IST. -->
+		<!-- Closing window: 5:02 PM, 5:17 PM and 5:29 PM IST, plus evening catch-up intervals. -->
 		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>2</integer></dict>
 		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>17</integer></dict>
 		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>29</integer></dict>
+		<dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>19</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>0</integer></dict>
 	</array>
 	<key>StandardOutPath</key>
 	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/launchd.log</string>

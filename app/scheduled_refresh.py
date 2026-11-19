@@ -17,11 +17,11 @@ def run(*args, cwd=BASE_DIR, timeout=None):
     subprocess.run(args, cwd=cwd, check=True, timeout=timeout)
 
 
-def run_git(*args, cwd=BASE_DIR, attempts=3):
+def run_git(*args, cwd=BASE_DIR, attempts=5):
     """Retry transient GitHub SSH transport failures before giving up.
 
     The cloud workflow remains the primary scheduler, but this runner is a
-    useful independent backup.  A short network drop must not lose the entire
+    useful independent backup. A short network drop must not lose the entire
     refresh window.
     """
     last_error = None
@@ -46,9 +46,10 @@ def main():
     minutes = now.hour * 60 + now.minute
     weekday = now.weekday()
     print(f"Scheduler invoked: {now.isoformat()} (weekday={weekday}, minute={minutes})", flush=True)
-    in_window = weekday < 5 and 1020 <= minutes <= 1050
+    # Allow refresh on weekdays anytime during the closing and evening window (17:00 to 23:30 IST)
+    in_window = weekday < 5 and 1020 <= minutes <= 1410
     if not args.force and not in_window:
-        print("Outside weekday 17:00–17:30 IST closing window", flush=True)
+        print("Outside weekday 17:00–23:30 IST window", flush=True)
         return 0
     with open(Path(BASE_DIR) / "data" / "refresh.lock", "a") as lock:
         try:
@@ -70,18 +71,18 @@ def main():
         for key in ("user.name", "user.email"):
             value = subprocess.check_output(["git", "config", key], cwd=BASE_DIR, text=True).strip()
             run("git", "config", key, value, cwd=checkout)
-        # Intraday runs only need the current trading day.  Re-downloading a
-        # seven-day window took longer than the 15-minute cadence and caused
-        # queued runs to publish late.  Historical repairs remain a manual
-        # ``app.ingest --days 7`` operation.
-        run(sys.executable, "-u", "-m", "app.ingest", "--days", "1", "--strict", cwd=checkout)
+        # Fetch a 7-day window so any missed or delayed trading days are healed
+        run(sys.executable, "-u", "-m", "app.ingest", "--days", "7", "--strict", cwd=checkout)
         run(sys.executable, "-u", "-m", "app.publish", cwd=checkout)
         run("git", "add", "data/market.db", "data/cbrics.csv", "public", "vercel.json", cwd=checkout)
-        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=checkout).returncode:
+        has_changes = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=checkout).returncode != 0
+        if has_changes:
             run("git", "commit", "-m", f"Market refresh {now:%Y-%m-%d %H:%M} IST", cwd=checkout)
-        # Fail visibly on a competing remote update; never discard either database.
-        run_git("push", "origin", "HEAD:main", cwd=checkout)
-        run(sys.executable, "-u", "-m", "app.verify_deploy", "--timeout", "900", cwd=checkout)
+            # Fail visibly on a competing remote update; never discard either database.
+            run_git("push", "origin", "HEAD:main", cwd=checkout)
+            run(sys.executable, "-u", "-m", "app.verify_deploy", "--timeout", "900", cwd=checkout)
+        else:
+            print("No data changes to commit; already up to date.", flush=True)
         shutil.rmtree(checkout)
         return 0
 

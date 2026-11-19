@@ -15,8 +15,11 @@ hours, 30 days after business hours.
 import datetime as dt
 import os
 import re
+import time
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 from ..config import HTTP_TIMEOUT, RAW_DIR, USER_AGENT
 
@@ -69,13 +72,27 @@ def _ddmmyyyy(d):
     return d.strftime("%d/%m/%Y")
 
 
+def _create_session():
+    s = requests.Session()
+    s.headers.update({"User-Agent": USER_AGENT,
+                      "Accept-Language": "en-US,en;q=0.9"})
+    retries = Retry(
+        total=3,
+        backoff_factor=1.0,
+        status_forcelist=[500, 502, 503, 504],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retries)
+    s.mount("https://", adapter)
+    s.mount("http://", adapter)
+    return s
+
+
 def fetch_export(instrument, segment, from_date, to_date, save_raw=True):
     """Download one F-TRAC export. Returns (bytes, filename) or (None, reason)."""
     page = page_name(instrument, segment)
     url = BASE + page
-    s = requests.Session()
-    s.headers.update({"User-Agent": USER_AGENT,
-                      "Accept-Language": "en-US,en;q=0.9"})
+    s = _create_session()
 
     r = s.get(url, timeout=HTTP_TIMEOUT)
     if r.status_code != 200:
@@ -283,17 +300,24 @@ def fetch_range(instrument, segment, from_date, to_date, progress=None):
     """Fetch a range of any length, chunked to respect the export window."""
     records, notes = [], []
     for start, stop in date_chunks(from_date, to_date):
-        try:
-            recs, info = fetch(instrument, segment, start, stop)
-        except requests.RequestException as e:
-            recs, info = [], f"network error: {e.__class__.__name__}"
-        except FtracError as e:
-            # Structural break -- surface it rather than reporting zero rows.
-            recs, info = [], f"LAYOUT CHANGED: {e}"
+        recs = []
+        info = None
+        for attempt in range(1, 4):
+            try:
+                recs, info = fetch(instrument, segment, start, stop)
+                break
+            except requests.RequestException as e:
+                info = f"network error: {e.__class__.__name__}"
+                if attempt < 3:
+                    time.sleep(attempt * 2)
+            except FtracError as e:
+                # Structural break -- surface it rather than reporting zero rows.
+                info = f"LAYOUT CHANGED: {e}"
+                break
         records.extend(recs)
         # Carry the reason through when something went wrong; a bare row count
         # would make a broken page look like a quiet holiday.
-        failed = info.startswith(("LAYOUT CHANGED", "network error"))
+        failed = info and info.startswith(("LAYOUT CHANGED", "network error"))
         notes.append(f"{start}..{stop}: {info}" if failed else f"{start}..{stop}: {len(recs)}")
         if progress:
             progress(instrument, segment, start, stop, len(recs))
