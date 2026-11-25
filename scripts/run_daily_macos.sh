@@ -36,13 +36,13 @@ fi
 echo "$$" > "$LOCK_FILE"
 trap 'rm -f "$LOCK_FILE"' EXIT INT TERM
 
-# Time guard: refresh from 2:00 PM through 5:20 PM local time unless forced.
+# Time guard: refresh from 10:00 AM through 11:30 PM local time unless forced.
 CURRENT_HOUR=$(date '+%H')
 CURRENT_MIN=$(date '+%M')
 TIME_VAL=$(( 10#$CURRENT_HOUR * 60 + 10#$CURRENT_MIN ))
 
-# 14:00 = 840 minutes; 17:20 = 1040 minutes.
-if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 840 || $TIME_VAL -gt 1040 ]]; then
+# 10:00 = 600 minutes; 23:30 = 1410 minutes.
+if [[ "${1:-}" != "--force" ]] && [[ $TIME_VAL -lt 600 || $TIME_VAL -gt 1410 ]]; then
   log "outside refresh window; exiting"
   # Sleep 10 seconds before exit so launchd minimum runtime threshold (>10s) passes cleanly with exit code 0
   sleep 10

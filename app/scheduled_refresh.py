@@ -46,10 +46,10 @@ def main():
     minutes = now.hour * 60 + now.minute
     weekday = now.weekday()
     print(f"Scheduler invoked: {now.isoformat()} (weekday={weekday}, minute={minutes})", flush=True)
-    # Allow refresh on weekdays anytime during the afternoon trading session, closing, and evening window (14:00 to 23:30 IST)
-    in_window = weekday < 5 and 840 <= minutes <= 1410
+    # Allow refresh on weekdays anytime during trading sessions, closing, and evening window (10:00 to 23:30 IST)
+    in_window = weekday < 5 and 600 <= minutes <= 1410
     if not args.force and not in_window:
-        print("Outside weekday 14:00–23:30 IST window", flush=True)
+        print("Outside weekday 10:00–23:30 IST window", flush=True)
         return 0
     with open(Path(BASE_DIR) / "data" / "refresh.lock", "a") as lock:
         try:

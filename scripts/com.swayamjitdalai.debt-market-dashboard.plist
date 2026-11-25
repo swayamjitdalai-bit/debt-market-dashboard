@@ -25,6 +25,18 @@
 	<string>/Users/swayamjitdalai/Library/Application Support/DebtMarket/runner</string>
 	<key>StartCalendarInterval</key>
 	<array>
+		<!-- 10 AM IST (10:00, 10:30) -->
+		<dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>30</integer></dict>
+		<!-- 11 AM IST (11:00, 11:30) -->
+		<dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>30</integer></dict>
+		<!-- 12 PM IST (12:00, 12:30) -->
+		<dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>30</integer></dict>
+		<!-- 1 PM IST (13:00, 13:30) -->
+		<dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>30</integer></dict>
 		<!-- 2 PM IST (14:00, 14:15, 14:30, 14:45) -->
 		<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>0</integer></dict>
 		<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>15</integer></dict>

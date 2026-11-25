@@ -2,8 +2,12 @@ name: Daily Market Data Update & Deployment
 
 on:
   schedule:
-    # Afternoon trading sessions (IST is UTC + 5:30)
+    # Morning & afternoon trading sessions (IST is UTC + 5:30)
     # Uses off-peak minutes to avoid GitHub Actions scheduling congestion.
+    - cron: '32 04 * * 1-5'  # 10:02 IST (10:02 AM IST)
+    - cron: '32 05 * * 1-5'  # 11:02 IST (11:02 AM IST)
+    - cron: '32 06 * * 1-5'  # 12:02 IST (12:02 PM IST)
+    - cron: '32 07 * * 1-5'  # 13:02 IST (1:02 PM IST)
     - cron: '32 08 * * 1-5'  # 14:02 IST (2:02 PM IST)
     - cron: '02 09 * * 1-5'  # 14:32 IST (2:32 PM IST)
     - cron: '32 09 * * 1-5'  # 15:02 IST (3:02 PM IST)

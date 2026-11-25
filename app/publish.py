@@ -723,7 +723,7 @@ def build_index(bundle, conn):
         T-Bill, SDL, CD/CP ranges, spreads and USD/INR.</div>
     </a>
   </div>
-  <p class="upd">Data as of {html_mod.escape(bundle['generated'])}. Scheduled every 15 minutes, weekdays 2:00–5:20 PM IST. Source publication and deployment can take a few minutes.</p>
+  <p class="upd">Data as of {html_mod.escape(bundle['generated'])}. Scheduled weekdays 10:00 AM–5:30 PM IST (every 15–30 mins). Source publication and deployment can take a few minutes.</p>
 </div>
 <style>
 .wrap{{max-width:1180px;margin:0 auto;padding:1.5rem 1rem 1rem}}
